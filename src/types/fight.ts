@@ -64,6 +64,8 @@ export interface FightResult {
   isTitleFight: boolean;
   isUpset: boolean;
   bonusAwards: string[]; // "fight_of_the_night", etc.
+  /** Prime en euros associee aux bonusAwards, calculee selon le palier de l'organisation (section demandee). */
+  bonusPayout?: number;
 }
 
 export interface FightRecord {
