@@ -207,7 +207,7 @@ function totalFights(f: Fighter): number {
 const MIN_FIGHTS_FOR_TITLE_SHOT = 8;
 
 /** Minimum de jours entre deux combats (avant camp) : au plus ~3 combats par an. */
-const MIN_DAYS_BETWEEN_FIGHTS = 110;
+const MIN_DAYS_BETWEEN_FIGHTS = 85;
 
 function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
   const candidates = Object.values(state.worldState.fighters).filter(
@@ -295,7 +295,7 @@ export function advanceTurn(state: CareerState): CareerState {
   const rng = getRng(state);
   const age = ageFromDob(state.fighter.dateOfBirth, state.worldDate);
 
-  if (state.fighter.careerWear >= 92 || age >= HARD_RETIREMENT_AGE) {
+  if (state.fighter.careerWear >= 97 || age >= HARD_RETIREMENT_AGE) {
     return pushRng(finalizeRetirement(state, rng), rng);
   }
 
@@ -340,7 +340,11 @@ export function advanceTurn(state: CareerState): CareerState {
       ? Math.round((new Date(state.worldDate).getTime() - new Date(lastFightDate).getTime()) / 86400000)
       : Infinity;
 
-    const fightChance = daysSinceLastFight < MIN_DAYS_BETWEEN_FIGHTS ? 0 : Math.min(0.7, 0.2 + state.ticksSinceLastFight * 0.15);
+    // Une fois le delai minimum passe, un combat doit arriver vite (section
+    // demandee : un veteran de 39 ans doit avoir un vrai palmares fourni,
+    // pas 8-2). Peu de tours narratifs suffisent avant que l'opportunite
+    // se concretise.
+    const fightChance = daysSinceLastFight < MIN_DAYS_BETWEEN_FIGHTS ? 0 : Math.min(1, 0.75 + state.ticksSinceLastFight * 0.4);
     if (rng.chance(fightChance)) {
       const opponent = pickOpponent(state, rng);
       if (opponent) {
@@ -540,7 +544,7 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
     momentum: Math.max(-100, Math.min(100, state.fighter.momentum + (won ? 15 : lost ? -18 : -2))),
     confidence: Math.max(0, Math.min(100, state.fighter.confidence + (won ? 8 : -10))),
     morale: Math.max(0, Math.min(100, state.fighter.morale + (won ? 6 : -12))),
-    careerWear: Math.min(100, state.fighter.careerWear + rng.float(3, 7) + (lost && isFinish ? 2 : 0)),
+    careerWear: Math.min(100, state.fighter.careerWear + rng.float(1.5, 3.5) + (lost && isFinish ? 1 : 0)),
     form: Math.max(0, state.fighter.form - rng.float(5, 12)),
   };
 

@@ -12,14 +12,45 @@ const ALL_WC_IDS = WEIGHT_CLASSES.map((w) => w.id);
  * le reste — roster, prestige, argent, difficulte de recrutement,
  * classements — est entierement simule par le moteur de jeu pour les
  * besoins de la partie. Rien ici n'est presente comme une donnee
- * officielle, aucun logo ni visuel proprietaire n'est utilise, et aucun
- * combattant reel n'apparait dans le roster (section 140 : roster fictif
- * en attendant un import de donnees sous licence).
+ * officielle, aucun logo ni visuel proprietaire n'est utilise (le roster
+ * reste fictif sauf import explicite — voir data/fighters/realRoster.ts).
  *
- * Quatre paliers volontairement non-hierarchiques (section 39) : aucun
- * chemin n'est objectivement optimal, chacun a des forces differentes.
+ * Trois paliers, demandes explicitement :
+ * - regional (tremplin) : ARES, HEXAGONE, Cage Warriors
+ * - confirme : Oktagon MMA, KSW, PFL
+ * - elite : UFC, le sommet
+ * A l'interieur d'un meme palier, aucun chemin n'est objectivement
+ * optimal (section 39) — chaque organisation a ses forces.
  */
 export const ORGANIZATIONS: Organization[] = [
+  {
+    id: "hexagone",
+    name: "HEXAGONE MMA",
+    shortName: "HEXAGONE",
+    tier: "regional",
+    country: "France",
+    prestige: 22,
+    money: 12,
+    audience: 18,
+    rosterQuality: 32,
+    recruitmentDifficulty: 5,
+    contractStyle: "per_fight",
+    weightClasses: ALL_WC_IDS,
+  },
+  {
+    id: "ares",
+    name: "ARES FC",
+    shortName: "ARES",
+    tier: "regional",
+    country: "France",
+    prestige: 30,
+    money: 18,
+    audience: 26,
+    rosterQuality: 38,
+    recruitmentDifficulty: 7,
+    contractStyle: "per_fight",
+    weightClasses: ALL_WC_IDS,
+  },
   {
     id: "cw",
     name: "Cage Warriors",
@@ -32,6 +63,20 @@ export const ORGANIZATIONS: Organization[] = [
     rosterQuality: 40,
     recruitmentDifficulty: 8,
     contractStyle: "per_fight",
+    weightClasses: ALL_WC_IDS,
+  },
+  {
+    id: "oktagon",
+    name: "Oktagon MMA",
+    shortName: "OKTAGON",
+    tier: "mid",
+    country: "Republique Tcheque",
+    prestige: 48,
+    money: 58,
+    audience: 48,
+    rosterQuality: 53,
+    recruitmentDifficulty: 35,
+    contractStyle: "guaranteed",
     weightClasses: ALL_WC_IDS,
   },
   {
@@ -77,6 +122,9 @@ export const ORGANIZATIONS: Organization[] = [
     weightClasses: ALL_WC_IDS,
   },
 ];
+
+export const REGIONAL_ORG_IDS = ["hexagone", "ares", "cw"];
+export const MID_ORG_IDS = ["oktagon", "ksw", "pfl"];
 
 export function getOrganization(id: string): Organization {
   const org = ORGANIZATIONS.find((o) => o.id === id);
