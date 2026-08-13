@@ -148,7 +148,7 @@ function addDays(date: string, days: number): string {
  * plutot que quelques jours. Un seul reglage ici plutot que de retoucher
  * chaque duree dans chaque fichier de contenu.
  */
-const EVENT_TIME_SCALE = 11;
+const EVENT_TIME_SCALE = 19;
 
 export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): CareerState {
   const template = state.activeEvent!.template;
