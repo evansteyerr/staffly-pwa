@@ -8,6 +8,7 @@ export const SOCIAL_EVENTS: EventTemplate[] = [
     description: "Ta famille organise une grande reunion. Un bon moment pour souffler avant le prochain camp.",
     weight: 6,
     cooldownDays: 200,
+    maxOccurrences: 1,
     choices: [
       {
         id: "go",
@@ -54,7 +55,7 @@ export const SOCIAL_EVENTS: EventTemplate[] = [
     requiredFlags: [],
     weight: 3,
     cooldownDays: 300,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "damage_control",
@@ -81,7 +82,7 @@ export const SOCIAL_EVENTS: EventTemplate[] = [
     description: "Un extrait de ton entrainement circule massivement sur les reseaux.",
     weight: 5,
     cooldownDays: 300,
-    maxOccurrences: 3,
+    maxOccurrences: 1,
     choices: [
       {
         id: "capitalize",
@@ -107,7 +108,7 @@ export const SOCIAL_EVENTS: EventTemplate[] = [
     description: "Apres une longue periode d'efforts, l'envie n'est plus la meme. C'est plus courant que tu ne le penses.",
     weight: 4,
     cooldownDays: 400,
-    maxOccurrences: 3,
+    maxOccurrences: 1,
     choices: [
       {
         id: "push_through",

@@ -108,6 +108,15 @@ function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Multiplicateur global du temps qui passe entre deux evenements
+ * (section 3) : une carriere complete doit tenir en ~10 minutes de jeu,
+ * donc chaque decision doit couvrir plusieurs mois de temps in-fiction
+ * plutot que quelques jours. Un seul reglage ici plutot que de retoucher
+ * chaque duree dans chaque fichier de contenu.
+ */
+const EVENT_TIME_SCALE = 11;
+
 export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): CareerState {
   const template = state.activeEvent!.template;
 
@@ -124,7 +133,7 @@ export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): 
   choice.setFlags?.forEach((f) => flags.add(f));
   choice.removeFlags?.forEach((f) => flags.delete(f));
 
-  const timeAdvance = rng.int(choice.timeAdvanceDaysMin, choice.timeAdvanceDaysMax);
+  const timeAdvance = rng.int(choice.timeAdvanceDaysMin, choice.timeAdvanceDaysMax) * EVENT_TIME_SCALE;
   const worldDate = addDays(next.worldDate, timeAdvance);
 
   const pendingFollowUps = [...next.pendingFollowUps];

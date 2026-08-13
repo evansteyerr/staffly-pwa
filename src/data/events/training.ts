@@ -9,7 +9,7 @@ export const TRAINING_EVENTS: EventTemplate[] = [
     minAge: 18,
     weight: 10,
     cooldownDays: 400,
-    maxOccurrences: 3,
+    maxOccurrences: 1,
     choices: [
       {
         id: "accept",
@@ -37,7 +37,7 @@ export const TRAINING_EVENTS: EventTemplate[] = [
     description: "Pendant une seance intense, un partenaire d'entrainement te touche fort. Rien de grave, mais ton ego en prend un coup.",
     weight: 6,
     cooldownDays: 300,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "brush_off",
@@ -64,7 +64,7 @@ export const TRAINING_EVENTS: EventTemplate[] = [
     minPopularity: 8,
     weight: 4,
     cooldownDays: 500,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "go",
@@ -92,7 +92,7 @@ export const TRAINING_EVENTS: EventTemplate[] = [
     minAge: 20,
     weight: 4,
     cooldownDays: 600,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "switch",

@@ -1,4 +1,4 @@
-import type { Fighter, FightMethod, FightResult, Gameplan, RoundStats } from "@/types";
+import type { AttributeBlock, CampFocus, Fighter, FightMethod, FightResult, Gameplan, RoundStats } from "@/types";
 import { Rng } from "@/game/rng/prng";
 
 export interface FightSimInput {
@@ -62,11 +62,16 @@ function initRuntime(fighter: Fighter, gameplan: Gameplan, campQuality: number):
   };
 }
 
+/** Un camp de qualite se traduit par une execution plus nette en cage (section 25/107). */
+function campMultiplier(s: FighterRuntimeState): number {
+  return 0.82 + (s.campQuality / 100) * 0.32;
+}
+
 function offensiveStrikingRating(s: FighterRuntimeState): number {
   const a = s.fighter.attributes;
   const base = a.striking * 0.35 + a.boxing * 0.2 + a.kickboxing * 0.2 + a.power * 0.15 + a.accuracy * 0.1;
   const gpBonus = s.gameplan === "pressure" || s.gameplan === "hunt_ko" ? 6 : s.gameplan === "point_fighting" ? 2 : 0;
-  return base + gpBonus;
+  return (base + gpBonus) * campMultiplier(s);
 }
 
 function defensiveStrikingRating(s: FighterRuntimeState): number {
@@ -78,7 +83,7 @@ function takedownRating(s: FighterRuntimeState): number {
   const a = s.fighter.attributes;
   const base = a.takedownOffense * 0.6 + a.wrestling * 0.4;
   const gpBonus = s.gameplan === "wrestling_heavy" || s.gameplan === "cage_control" ? 8 : 0;
-  return base + gpBonus;
+  return (base + gpBonus) * campMultiplier(s);
 }
 
 function takedownDefenseRating(s: FighterRuntimeState): number {
@@ -90,7 +95,7 @@ function groundOffenseRating(s: FighterRuntimeState): number {
   const a = s.fighter.attributes;
   const base = a.groundControl * 0.35 + a.groundAndPound * 0.25 + a.submissionOffense * 0.4;
   const gpBonus = s.gameplan === "submission_hunting" ? 8 : 0;
-  return base + gpBonus;
+  return (base + gpBonus) * campMultiplier(s);
 }
 
 function groundDefenseRating(s: FighterRuntimeState): number {
@@ -428,4 +433,80 @@ function computeFightImportance(input: FightSimInput): number {
   score += input.rivalryIntensity * 0.2;
   score += (input.fighterA.popularity + input.fighterB.popularity) * 0.15;
   return Math.round(Math.min(100, score));
+}
+
+/**
+ * Effet reel du camp choisi (section 25) : chaque orientation booste
+ * temporairement le paquet d'attributs correspondant pour CE combat, sans
+ * modifier les attributs de base du combattant. C'est ce qui doit faire
+ * bouger les pourcentages de victoire affiches selon le camp choisi.
+ */
+const CAMP_FOCUS_BOOSTS: Record<CampFocus, Partial<AttributeBlock>> = {
+  striking: { striking: 7, boxing: 6, kickboxing: 6, kicks: 5, accuracy: 4, cardio: -2 },
+  wrestling: { wrestling: 7, takedownOffense: 7, takedownDefense: 4, cardio: -2 },
+  grappling: { bjj: 7, submissionOffense: 7, submissionDefense: 5, groundControl: 4, cardio: -2 },
+  cardio: { cardio: 9, recovery: 5, strikingDefense: -1 },
+  tactical: { fightIQ: 7, composure: 5, strikingDefense: 2, takedownDefense: 2 },
+  weight_cut: { power: 4, strength: 4, explosiveness: 3, cardio: -6 },
+  balanced: { striking: 2, wrestling: 2, bjj: 2, cardio: 2, fightIQ: 2 },
+};
+
+export function applyCampFocusBoost(attributes: AttributeBlock, campFocus: CampFocus): AttributeBlock {
+  const boosts = CAMP_FOCUS_BOOSTS[campFocus];
+  const result = { ...attributes };
+  for (const key of Object.keys(boosts) as (keyof AttributeBlock)[]) {
+    const delta = boosts[key] ?? 0;
+    result[key] = Math.max(1, Math.min(99, result[key] + delta));
+  }
+  return result;
+}
+
+const ESTIMATE_OPPONENT_GAMEPLANS: Gameplan[] = [
+  "balanced",
+  "pressure",
+  "counter_striker",
+  "wrestling_heavy",
+  "cage_control",
+];
+
+/**
+ * Estimation live des chances de victoire selon le plan de jeu et le camp
+ * choisis (section 26/94) : fait tourner plusieurs mini-simulations
+ * completes avec le VRAI moteur (donc coherent avec le combat qui aura
+ * vraiment lieu), pas une formule approximative separee.
+ */
+export function estimateWinProbabilityForPlan(
+  fighterA: Fighter,
+  fighterB: Fighter,
+  gameplanA: Gameplan,
+  campFocusA: CampFocus,
+  seed: string,
+  samples = 30,
+): number {
+  const rng = Rng.fromString(seed);
+  const boostedFighterA: Fighter = { ...fighterA, attributes: applyCampFocusBoost(fighterA.attributes, campFocusA) };
+
+  let wins = 0;
+  for (let i = 0; i < samples; i++) {
+    const result = simulateFight(
+      {
+        fighterA: boostedFighterA,
+        fighterB,
+        gameplanA,
+        gameplanB: rng.pick(ESTIMATE_OPPONENT_GAMEPLANS),
+        campQualityA: 58,
+        campQualityB: 50,
+        maxRounds: 3,
+        organizationId: "estimate",
+        eventName: "estimate",
+        date: "2026-01-01",
+        isTitleFight: false,
+        rivalryIntensity: 0,
+        homeAdvantageFor: null,
+      },
+      rng,
+    );
+    if (result.winnerId === boostedFighterA.id) wins++;
+  }
+  return wins / samples;
 }
