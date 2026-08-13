@@ -16,7 +16,7 @@ import { applyAgingTick } from "@/game/progression/aging";
 import { generateContractOffers } from "@/game/contracts/offers";
 import { activateEvent, applyChoice, pickNextEvent } from "@/game/events/engine";
 import { ALL_EVENTS } from "@/data/events";
-import { simulateFight } from "@/game/fight/simulate";
+import { simulateFight, applyCampFocusBoost } from "@/game/fight/simulate";
 import { computeLegacy, classifyLegacy } from "@/game/legacy/score";
 import { generateEpilogue } from "@/game/legacy/epilogue";
 import { getOrganization } from "@/data/organizations";
@@ -125,10 +125,10 @@ export function createCareer(input: NewCareerInput): CareerState {
 }
 
 function retirementCheckProbability(age: number, wear: number): number {
-  if (age < 33) return 0;
-  const ageFactor = (age - 33) * 0.03;
-  const wearFactor = wear > 70 ? (wear - 70) * 0.01 : 0;
-  return Math.min(0.5, ageFactor + wearFactor);
+  if (age < 31) return 0;
+  const ageFactor = (age - 31) * 0.05;
+  const wearFactor = wear > 55 ? (wear - 55) * 0.015 : 0;
+  return Math.min(0.6, ageFactor + wearFactor);
 }
 
 function buildRetirementEvent(): EventTemplate {
@@ -255,7 +255,7 @@ export function advanceTurn(state: CareerState): CareerState {
   const rng = getRng(state);
   const age = ageFromDob(state.fighter.dateOfBirth, state.worldDate);
 
-  if (state.fighter.careerWear >= 97) {
+  if (state.fighter.careerWear >= 85) {
     return pushRng(finalizeRetirement(state, rng), rng);
   }
 
@@ -324,7 +324,7 @@ export function advanceTurn(state: CareerState): CareerState {
 
   const event = pickNextEvent(state, ALL_EVENTS, rng);
   if (!event) {
-    const advanced = { ...state, worldDate: addDays(state.worldDate, 14) };
+    const advanced = { ...state, worldDate: addDays(state.worldDate, 80) };
     return pushRng(advanced, rng);
   }
   return pushRng(activateEvent(state, event), rng);
@@ -382,7 +382,7 @@ export function chooseContractOffer(state: CareerState, offer: ContractOffer): C
 }
 
 export function declineOffers(state: CareerState): CareerState {
-  return { ...state, pendingOffers: [], worldDate: addDays(state.worldDate, 14) };
+  return { ...state, pendingOffers: [], worldDate: addDays(state.worldDate, 80) };
 }
 
 /**
@@ -443,10 +443,16 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
   const campQuality = Math.round(
     50 + state.fighter.attributes.discipline * 0.2 + state.relationships.gym * 0.15 + rng.gaussian(0, 8),
   );
+  // Le camp choisi booste reellement le paquet d'attributs correspondant
+  // pour ce combat (section 25/94) — sans toucher aux attributs de base.
+  const fighterForFight: Fighter = {
+    ...state.fighter,
+    attributes: applyCampFocusBoost(state.fighter.attributes, plan.campFocus),
+  };
 
   const result = simulateFight(
     {
-      fighterA: state.fighter,
+      fighterA: fighterForFight,
       fighterB: opponent,
       gameplanA: plan.gameplan,
       gameplanB: rng.pick<Gameplan>(["balanced", "pressure", "counter_striker", "wrestling_heavy", "cage_control"]),
@@ -482,7 +488,7 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
     momentum: Math.max(-100, Math.min(100, state.fighter.momentum + (won ? 15 : lost ? -18 : -2))),
     confidence: Math.max(0, Math.min(100, state.fighter.confidence + (won ? 8 : -10))),
     morale: Math.max(0, Math.min(100, state.fighter.morale + (won ? 6 : -12))),
-    careerWear: Math.min(100, state.fighter.careerWear + rng.float(4, 10) + (lost && isFinish ? 4 : 0)),
+    careerWear: Math.min(100, state.fighter.careerWear + rng.float(7, 15) + (lost && isFinish ? 4 : 0)),
     form: Math.max(0, state.fighter.form - rng.float(5, 12)),
   };
 

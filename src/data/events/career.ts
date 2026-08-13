@@ -8,7 +8,7 @@ export const CAREER_EVENTS: EventTemplate[] = [
     description: "Ton manager pense qu'un combat propose est trop risque pour ta progression actuelle.",
     weight: 3,
     cooldownDays: 300,
-    maxOccurrences: 3,
+    maxOccurrences: 1,
     choices: [
       {
         id: "listen",
@@ -35,7 +35,7 @@ export const CAREER_EVENTS: EventTemplate[] = [
     description: "Le combattant {opponentName} declare en conference de presse que tu n'as encore rien prouve.",
     weight: 5,
     cooldownDays: 200,
-    maxOccurrences: 5,
+    maxOccurrences: 3,
     choices: [
       {
         id: "clap_back",
@@ -62,7 +62,7 @@ export const CAREER_EVENTS: EventTemplate[] = [
     description: "A l'approche de la pesee, la coupe de poids est plus dure que prevu.",
     weight: 5,
     cooldownDays: 150,
-    maxOccurrences: 6,
+    maxOccurrences: 1,
     choices: [
       {
         id: "aggressive_cut",
@@ -90,6 +90,7 @@ export const CAREER_EVENTS: EventTemplate[] = [
     description: "Une gene physique apparait pendant la preparation. Rien d'alarmant si elle est bien geree.",
     weight: 6,
     cooldownDays: 150,
+    maxOccurrences: 1,
     choices: [
       {
         id: "rest",
@@ -118,7 +119,7 @@ export const CAREER_EVENTS: EventTemplate[] = [
     minAge: 22,
     weight: 2,
     cooldownDays: 800,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "follow",
@@ -148,6 +149,7 @@ export const CAREER_EVENTS: EventTemplate[] = [
     requiredFlags: [],
     weight: 3,
     cooldownDays: 400,
+    maxOccurrences: 1,
     choices: [
       {
         id: "extend",

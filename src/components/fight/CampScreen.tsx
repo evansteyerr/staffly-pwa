@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { CampFocus, CareerState, Gameplan } from "@/types";
 import { computeSimplifiedRatings } from "@/types";
 import { useCareerStore } from "@/store/careerStore";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { estimateWinProbability } from "@/game/fight/simulate";
+import { estimateWinProbabilityForPlan } from "@/game/fight/simulate";
 import { getOrganization } from "@/data/organizations";
 
 const CAMP_FOCUS_OPTIONS: { id: CampFocus; emoji: string; label: string }[] = [
@@ -41,7 +41,23 @@ export function CampScreen({ career }: { career: CareerState }) {
   const opponent = career.worldState.fighters[pending.opponentId];
   const org = getOrganization(pending.organizationId);
   const oppRatings = opponent ? computeSimplifiedRatings(opponent.attributes) : null;
-  const winProb = opponent ? Math.round(estimateWinProbability(career.fighter, opponent) * 100) : 50;
+
+  // Recalculee a chaque changement de camp/plan de jeu, avec le vrai moteur
+  // de combat (section 26/94) : le pourcentage doit refleter reellement la
+  // strategie choisie, pas juste un ratio de stats brutes fige.
+  const winProb = useMemo(() => {
+    if (!opponent) return 50;
+    const prob = estimateWinProbabilityForPlan(
+      career.fighter,
+      opponent,
+      gameplan,
+      campFocus,
+      `${career.fighter.id}-${opponent.id}-${gameplan}-${campFocus}`,
+    );
+    return Math.round(prob * 100);
+  }, [career.fighter, opponent, gameplan, campFocus]);
+
+  const winProbColorClass = winProb >= 55 ? "text-emerald-500" : winProb <= 45 ? "text-accent-red-bright" : "text-foreground";
 
   return (
     <div className="flex flex-col gap-4">
@@ -61,7 +77,7 @@ export function CampScreen({ career }: { career: CareerState }) {
             </div>
             <div className="text-right text-xs text-muted">
               <div>Tes chances</div>
-              <div className="text-lg font-bold text-foreground">{winProb}%</div>
+              <div className={`text-lg font-bold transition-colors ${winProbColorClass}`}>{winProb}%</div>
             </div>
           </div>
         )}

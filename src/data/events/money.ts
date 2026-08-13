@@ -8,7 +8,7 @@ export const MONEY_EVENTS: EventTemplate[] = [
     description: "{fighterName}, un equipementier local souhaite sponsoriser tes prochains combats.",
     weight: 8,
     cooldownDays: 250,
-    maxOccurrences: 4,
+    maxOccurrences: 1,
     choices: [
       {
         id: "accept",
@@ -34,7 +34,7 @@ export const MONEY_EVENTS: EventTemplate[] = [
     minPopularity: 15,
     weight: 3,
     cooldownDays: 500,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "invest",
@@ -62,7 +62,7 @@ export const MONEY_EVENTS: EventTemplate[] = [
     minPopularity: 20,
     weight: 3,
     cooldownDays: 600,
-    maxOccurrences: 2,
+    maxOccurrences: 1,
     choices: [
       {
         id: "pay",
