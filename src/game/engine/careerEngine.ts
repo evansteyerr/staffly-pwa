@@ -170,6 +170,17 @@ function buildRetirementEvent(): EventTemplate {
   };
 }
 
+function totalFights(f: Fighter): number {
+  return f.record.wins + f.record.losses + f.record.draws;
+}
+
+/**
+ * Meme classe #1-3, un combat de titre doit se meriter par un vrai
+ * parcours (section 44/99) — sinon un petit vivier de debut permet un
+ * title shot beaucoup trop tot dans la carriere.
+ */
+const MIN_FIGHTS_FOR_TITLE_SHOT = 8;
+
 function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
   const candidates = Object.values(state.worldState.fighters).filter(
     (f) =>
@@ -181,34 +192,55 @@ function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
   if (candidates.length === 0) return null;
 
   const playerRank = getRankPosition(state.worldState, state.fighter);
+  const board = state.worldState.rankings.find(
+    (r) => r.organizationId === state.fighter.organizationId && r.weightClassId === state.fighter.weightClass,
+  );
+
   if (playerRank === "champion") {
-    // Defense de titre : adversaire dans le top 15
-    const board = state.worldState.rankings.find(
-      (r) => r.organizationId === state.fighter.organizationId && r.weightClassId === state.fighter.weightClass,
-    );
+    // Defense de titre : adversaire dans le haut du classement uniquement.
     const topIds = board?.top15.slice(0, 5).map((e) => e.fighterId) ?? [];
     const pool = candidates.filter((c) => topIds.includes(c.id));
     if (pool.length > 0) return rng.pick(pool);
   }
-  if (typeof playerRank === "number" && playerRank <= 3 && rng.chance(0.4)) {
-    const board = state.worldState.rankings.find(
-      (r) => r.organizationId === state.fighter.organizationId && r.weightClassId === state.fighter.weightClass,
-    );
+  if (
+    typeof playerRank === "number" &&
+    playerRank <= 3 &&
+    totalFights(state.fighter) >= MIN_FIGHTS_FOR_TITLE_SHOT &&
+    rng.chance(0.4)
+  ) {
     if (board?.championId) {
       const champion = state.worldState.fighters[board.championId];
       if (champion) return champion;
     }
   }
 
-  // Matchmaking par niveau (section 99/136) : un debutant ne doit pas
-  // tomber sur le pire veteran du roster par pur hasard. On favorise les
-  // adversaires de niveau proche, sans exclure totalement les ecarts
-  // (permet aussi bien la fois "short notice" difficile que la bonne
-  // surprise contre plus fort qu'annonce).
+  // Un combattant non classe (ou loin dans le classement) ne doit jamais
+  // se voir proposer le champion ou le top 3 directement (section 99) :
+  // on grimpe les echelons, on ne saute pas dessus. On exclut donc le
+  // sommet du classement tant que ce n'est pas mérité.
+  let pool = candidates;
+  if (playerRank === null || (typeof playerRank === "number" && playerRank > 5)) {
+    const protectedIds = new Set(
+      [board?.championId, ...(board?.top15.slice(0, 3).map((e) => e.fighterId) ?? [])].filter(
+        (id): id is string => !!id,
+      ),
+    );
+    const filtered = candidates.filter((c) => !protectedIds.has(c.id));
+    if (filtered.length > 0) pool = filtered;
+  }
+
+  // Matchmaking coherent (section 99/136) : combattants de niveau ET
+  // d'experience proches — pas de 4-0 envoye contre un 17-5. On favorise
+  // les adversaires proches sans exclure totalement les ecarts (permet un
+  // "short notice" difficile ou une bonne surprise), mais fortement.
   const playerOverall = computeOverall(state.fighter.attributes);
-  return rng.weightedPick(candidates, (c) => {
-    const diff = Math.abs(computeOverall(c.attributes) - playerOverall);
-    return Math.exp(-diff / 14) + 0.05;
+  const playerFights = totalFights(state.fighter);
+  return rng.weightedPick(pool, (c) => {
+    const skillDiff = Math.abs(computeOverall(c.attributes) - playerOverall);
+    const experienceDiff = Math.abs(totalFights(c) - playerFights);
+    const skillWeight = Math.exp(-skillDiff / 13);
+    const experienceWeight = Math.exp(-experienceDiff / 2.5);
+    return skillWeight * experienceWeight + 0.015;
   });
 }
 
@@ -257,13 +289,21 @@ export function advanceTurn(state: CareerState): CareerState {
   }
 
   if (state.contract) {
-    const fightChance = Math.min(0.85, 0.2 + state.ticksSinceLastFight * 0.18);
+    // Laisse la place a plusieurs evenements narratifs entre deux combats
+    // (section 2 : le jeu ne doit pas etre qu'une succession de fights).
+    const fightChance = Math.min(0.45, 0.06 + state.ticksSinceLastFight * 0.07);
     if (rng.chance(fightChance)) {
       const opponent = pickOpponent(state, rng);
       if (opponent) {
         const org = getOrganization(state.fighter.organizationId!);
         const playerRank = getRankPosition(state.worldState, state.fighter);
-        const isTitleFight = playerRank === "champion" || (typeof playerRank === "number" && playerRank <= 3 && opponent.id === state.worldState.titles.find((t) => t.organizationId === org.id && t.weightClassId === state.fighter.weightClass)?.currentChampionId);
+        const hasEnoughFightsForTitle = totalFights(state.fighter) >= MIN_FIGHTS_FOR_TITLE_SHOT;
+        const isTitleFight =
+          playerRank === "champion" ||
+          (typeof playerRank === "number" &&
+            playerRank <= 3 &&
+            hasEnoughFightsForTitle &&
+            opponent.id === state.worldState.titles.find((t) => t.organizationId === org.id && t.weightClassId === state.fighter.weightClass)?.currentChampionId);
         const eventName = isTitleFight
           ? `${org.shortName} — Combat pour le titre`
           : `${org.shortName} Fight Night`;
@@ -343,6 +383,39 @@ export function chooseContractOffer(state: CareerState, offer: ContractOffer): C
 
 export function declineOffers(state: CareerState): CareerState {
   return { ...state, pendingOffers: [], worldDate: addDays(state.worldDate, 14) };
+}
+
+/**
+ * Refuser un combat propose (section 18) : preserve la sante/preparation,
+ * mais coute un peu de reputation et de confiance du promoteur — et rien
+ * ne garantit qu'une aussi bonne opportunite revienne vite.
+ */
+export function declinePendingFight(state: CareerState): CareerState {
+  if (!state.pendingFight) return state;
+  const rng = getRng(state);
+
+  const daysPassed = rng.int(10, 20);
+  const worldTicked = advanceWorld(state.worldState, daysPassed, rng, state.fighter.id);
+  const worldDate = addDays(state.worldDate, daysPassed);
+  const agedFighter = applyAgingTick(state.fighter, ageFromDob(state.fighter.dateOfBirth, worldDate), daysPassed, rng);
+
+  const fighter: Fighter = {
+    ...agedFighter,
+    reputation: Math.max(0, agedFighter.reputation - 3),
+    morale: Math.min(100, agedFighter.morale + 5),
+    form: Math.min(100, agedFighter.form + 4),
+  };
+
+  let next: CareerState = {
+    ...state,
+    fighter,
+    worldState: worldTicked,
+    worldDate,
+    relationships: { ...state.relationships, promoter: Math.max(-100, state.relationships.promoter - 6) },
+    pendingFight: null,
+  };
+  next = syncPlayerIntoWorld(next);
+  return pushRng(next, rng);
 }
 
 export interface FightPlan {

@@ -33,6 +33,7 @@ const GAMEPLAN_OPTIONS: { id: Gameplan; label: string }[] = [
 
 export function CampScreen({ career }: { career: CareerState }) {
   const fight = useCareerStore((s) => s.fight);
+  const declineFight = useCareerStore((s) => s.declineFight);
   const [campFocus, setCampFocus] = useState<CampFocus>("balanced");
   const [gameplan, setGameplan] = useState<Gameplan>("balanced");
 
@@ -97,6 +98,9 @@ export function CampScreen({ career }: { career: CareerState }) {
       </div>
 
       <Button onClick={() => fight(gameplan, campFocus)}>Entrer dans la cage</Button>
+      <Button variant="ghost" onClick={declineFight}>
+        Refuser ce combat
+      </Button>
     </div>
   );
 }

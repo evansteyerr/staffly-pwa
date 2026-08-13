@@ -6,6 +6,7 @@ import {
   chooseContractOffer,
   createCareer,
   declineOffers,
+  declinePendingFight,
   resolveEventChoice,
   resolvePendingFight,
   type NewCareerInput,
@@ -21,6 +22,7 @@ interface CareerStoreState {
   acceptOffer: (offer: ContractOffer) => void;
   skipOffers: () => void;
   fight: (gameplan: Gameplan, campFocus: CampFocus) => void;
+  declineFight: () => void;
   abandonCareer: () => void;
   clearFightResult: () => void;
 }
@@ -91,6 +93,12 @@ export const useCareerStore = create<CareerStoreState>()(
         if (!career) return;
         const next = resolvePendingFight(career, { gameplan, campFocus });
         set((s) => ({ career: next, pantheon: archiveIfRetired(next, s.pantheon) }));
+      },
+
+      declineFight: () => {
+        const { career } = get();
+        if (!career) return;
+        set({ career: declinePendingFight(career) });
       },
 
       clearFightResult: () => {
