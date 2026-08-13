@@ -38,7 +38,8 @@ export default function Home() {
       </div>
 
       <p className="text-center text-xs text-muted">
-        Univers, organisations et combattants entierement fictifs.
+        Univers et combattants simules. Les noms d&apos;organisations (UFC, KSW, PFL, Cage Warriors...) sont utilises a
+        titre indicatif ; roster, classements et statistiques sont entierement fictifs et sans lien officiel.
       </p>
     </main>
   );

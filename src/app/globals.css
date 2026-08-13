@@ -26,8 +26,20 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+ * Identite visuelle "fight night" (section 88) : un fond uni aurait ete
+ * plat et generique. On construit plutot une ambiance d'arriere-plan avec
+ * une lueur rouge en haut (entree en scene / eclairage de cage), un
+ * discret reflet dore en bas (statut/prestige), et un degrade chaud vers
+ * le noir plutot qu'un noir neutre — sans jamais nuire a la lisibilite
+ * du contenu, qui reste sur des cartes `bg-surface` opaques par-dessus.
+ */
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 140% 55% at 50% -12%, rgba(200, 38, 47, 0.26), transparent 62%),
+    radial-gradient(ellipse 90% 55% at 90% 115%, rgba(201, 162, 75, 0.12), transparent 60%),
+    linear-gradient(180deg, #171012 0%, #100b0c 40%, #0a0708 100%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }

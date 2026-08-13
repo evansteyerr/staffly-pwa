@@ -1,4 +1,4 @@
-import type { CareerState, EffectBag, EventChoice, EventTemplate } from "@/types";
+import type { CareerState, EffectBag, EventChoice, EventOutcome, EventTemplate } from "@/types";
 import { Rng } from "@/game/rng/prng";
 import { deriveCareerPhase } from "./phase";
 import { getOrganization } from "@/data/organizations";
@@ -49,13 +49,46 @@ export function pickNextEvent(state: CareerState, allEvents: EventTemplate[], rn
   return rng.weightedPick(pool, (e) => e.weight);
 }
 
-export function activateEvent(state: CareerState, template: EventTemplate): CareerState {
+/**
+ * Certains evenements (rivalite) referencent {opponentName} dans leur
+ * texte. On resout un rival reel du monde genere : d'abord une relation
+ * negative marquee (une vraie rivalite construite en jeu), sinon un
+ * combattant plausible de la meme categorie — jamais un nom de personne
+ * reelle (section 5/128 : pas de donnees inventees attribuees a de vraies
+ * personnes).
+ */
+function pickOpponentNameForTemplate(state: CareerState, template: EventTemplate, rng: Rng): string | undefined {
+  const needsOpponent = template.title.includes("{opponentName}") || template.description.includes("{opponentName}");
+  if (!needsOpponent) return undefined;
+
+  const rivalEntries = Object.entries(state.fighterRelationships).filter(([, value]) => value < -15);
+  if (rivalEntries.length > 0) {
+    rivalEntries.sort((a, b) => a[1] - b[1]);
+    const rival = state.worldState.fighters[rivalEntries[0][0]];
+    if (rival) return `${rival.firstName} ${rival.lastName}`;
+  }
+
+  const pool = Object.values(state.worldState.fighters).filter(
+    (f) =>
+      f.id !== state.fighter.id &&
+      f.weightClass === state.fighter.weightClass &&
+      !f.retired &&
+      (state.fighter.organizationId ? f.organizationId === state.fighter.organizationId : true),
+  );
+  if (pool.length === 0) return undefined;
+  const pick = rng.pick(pool);
+  return `${pick.firstName} ${pick.lastName}`;
+}
+
+export function activateEvent(state: CareerState, template: EventTemplate, rng: Rng): CareerState {
+  const opponentName = pickOpponentNameForTemplate(state, template, rng);
+  const extra = opponentName ? { opponentName } : undefined;
   return {
     ...state,
     activeEvent: {
       template,
-      renderedTitle: renderTemplate(template.title, state),
-      renderedDescription: renderTemplate(template.description, state),
+      renderedTitle: renderTemplate(template.title, state, extra),
+      renderedDescription: renderTemplate(template.description, state, extra),
     },
   };
 }
@@ -119,11 +152,13 @@ const EVENT_TIME_SCALE = 11;
 
 export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): CareerState {
   const template = state.activeEvent!.template;
+  const renderedTitle = state.activeEvent!.renderedTitle;
 
   let effects: Partial<EffectBag> = choice.visibleEffects;
+  let success: boolean | null = null;
   if (choice.successChance !== undefined) {
-    const succeeded = rng.chance(choice.successChance);
-    effects = succeeded ? choice.visibleEffects : (choice.onFailure ?? {});
+    success = rng.chance(choice.successChance);
+    effects = success ? choice.visibleEffects : (choice.onFailure ?? {});
   }
 
   let next = applyEffects(state, effects);
@@ -152,6 +187,21 @@ export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): 
     },
   };
 
+  const resultLabel =
+    success === null
+      ? (choice.flavor ?? "Decision prise.")
+      : success
+        ? (choice.successLabel ?? "Ca a fonctionne comme prevu.")
+        : (choice.failureLabel ?? "Ca ne s'est pas passe comme prevu.");
+
+  const outcome: EventOutcome = {
+    eventTitle: renderedTitle,
+    choiceLabel: choice.label,
+    resultLabel,
+    success,
+    effects,
+  };
+
   return {
     ...next,
     flags: Array.from(flags),
@@ -159,5 +209,6 @@ export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): 
     pendingFollowUps,
     eventHistory,
     activeEvent: null,
+    lastEventOutcome: outcome,
   };
 }

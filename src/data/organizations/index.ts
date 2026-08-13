@@ -4,50 +4,74 @@ import { WEIGHT_CLASSES } from "./weightClasses";
 const ALL_WC_IDS = WEIGHT_CLASSES.map((w) => w.id);
 
 /**
- * Organisations entièrement fictives (section 128 — pas de branding réel
- * tant qu'aucune licence n'est disponible). Trois paliers volontairement
- * non-hiérarchiques (section 39) : aucun chemin n'est objectivement
- * optimal, chacun a des forces différentes.
+ * Organisations reelles du MMA mondial (section 4/39 du cahier des
+ * charges), utilisees ici uniquement comme cadre/decor pour la carriere.
+ *
+ * IMPORTANT — separation stricte donnees reelles / donnees inventees
+ * (section 5/128) : seuls les NOMS de ces organisations sont reels. Tout
+ * le reste — roster, prestige, argent, difficulte de recrutement,
+ * classements — est entierement simule par le moteur de jeu pour les
+ * besoins de la partie. Rien ici n'est presente comme une donnee
+ * officielle, aucun logo ni visuel proprietaire n'est utilise, et aucun
+ * combattant reel n'apparait dans le roster (section 140 : roster fictif
+ * en attendant un import de donnees sous licence).
+ *
+ * Quatre paliers volontairement non-hierarchiques (section 39) : aucun
+ * chemin n'est objectivement optimal, chacun a des forces differentes.
  */
 export const ORGANIZATIONS: Organization[] = [
   {
-    id: "acs",
-    name: "Apex Cage Series",
-    shortName: "ACS",
+    id: "cw",
+    name: "Cage Warriors",
+    shortName: "CW",
     tier: "regional",
-    country: "France",
-    prestige: 25,
-    money: 20,
-    audience: 20,
-    rosterQuality: 30,
-    recruitmentDifficulty: 10,
+    country: "Royaume-Uni",
+    prestige: 35,
+    money: 15,
+    audience: 30,
+    rosterQuality: 40,
+    recruitmentDifficulty: 8,
     contractStyle: "per_fight",
     weightClasses: ALL_WC_IDS,
   },
   {
-    id: "gfl",
-    name: "Global Fight League",
-    shortName: "GFL",
+    id: "ksw",
+    name: "KSW",
+    shortName: "KSW",
     tier: "mid",
     country: "Pologne",
     prestige: 55,
-    money: 65,
-    audience: 50,
-    rosterQuality: 60,
-    recruitmentDifficulty: 45,
+    money: 70,
+    audience: 55,
+    rosterQuality: 58,
+    recruitmentDifficulty: 40,
     contractStyle: "guaranteed",
     weightClasses: ALL_WC_IDS,
   },
   {
-    id: "sfc",
-    name: "Supreme Fighting Championship",
-    shortName: "SFC",
+    id: "pfl",
+    name: "PFL",
+    shortName: "PFL",
+    tier: "mid",
+    country: "USA",
+    prestige: 68,
+    money: 78,
+    audience: 65,
+    rosterQuality: 70,
+    recruitmentDifficulty: 55,
+    contractStyle: "guaranteed",
+    weightClasses: ALL_WC_IDS,
+  },
+  {
+    id: "ufc",
+    name: "UFC",
+    shortName: "UFC",
     tier: "elite",
     country: "USA",
-    prestige: 95,
-    money: 90,
-    audience: 95,
-    rosterQuality: 92,
+    prestige: 97,
+    money: 95,
+    audience: 98,
+    rosterQuality: 95,
     recruitmentDifficulty: 85,
     contractStyle: "per_fight",
     weightClasses: ALL_WC_IDS,

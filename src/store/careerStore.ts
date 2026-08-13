@@ -16,6 +16,9 @@ import { getOrganization } from "@/data/organizations";
 interface CareerStoreState {
   career: CareerState | null;
   pantheon: PantheonEntry[];
+  /** false tant que la sauvegarde localStorage n'a pas fini de se recharger — evite qu'un refresh direct sur /career, /rankings, etc. rebondisse vers l'accueil avant que la carriere persistee ne soit relue. */
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
   startCareer: (input: NewCareerInput) => void;
   advance: () => void;
   chooseEvent: (choiceId: string) => void;
@@ -25,6 +28,7 @@ interface CareerStoreState {
   declineFight: () => void;
   abandonCareer: () => void;
   clearFightResult: () => void;
+  clearEventOutcome: () => void;
 }
 
 function archiveIfRetired(career: CareerState, pantheon: PantheonEntry[]): PantheonEntry[] {
@@ -56,6 +60,7 @@ export const useCareerStore = create<CareerStoreState>()(
     (set, get) => ({
       career: null,
       pantheon: [],
+      hasHydrated: false,
 
       startCareer: (input) => {
         const career = createCareer(input);
@@ -107,11 +112,28 @@ export const useCareerStore = create<CareerStoreState>()(
         set({ career: { ...career, lastFightResult: null } });
       },
 
+      clearEventOutcome: () => {
+        // Ferme l'ecran de resultat ET enchaine directement sur la suite
+        // (section 3) : voir le resultat d'un choix ne doit pas couter un
+        // clic de plus qu'avant — "Continuer" ici fait a la fois office de
+        // fermeture et de tour suivant.
+        const { career } = get();
+        if (!career) return;
+        const cleared = { ...career, lastEventOutcome: null };
+        const next = advanceTurn(cleared);
+        set((s) => ({ career: next, pantheon: archiveIfRetired(next, s.pantheon) }));
+      },
+
       abandonCareer: () => set({ career: null }),
+
+      setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: "cage-legacy:v1",
       partialize: (state) => ({ career: state.career, pantheon: state.pantheon }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

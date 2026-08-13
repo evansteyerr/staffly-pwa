@@ -15,7 +15,8 @@ const FIGHTERS_PER_WEIGHT_CLASS = 26;
  * Cree un snapshot initial du monde (section 7/122) : le vrai roster n'est
  * pas encore branche (section 140) — pour le MVP, un roster fictif est
  * genere de facon deterministe a partir de la seed de la carriere, reparti
- * sur les 3 organisations fictives par paliers de qualite.
+ * sur les organisations (reelles de nom, roster simule — voir
+ * data/organizations) par paliers de qualite.
  */
 export function generateWorld(seed: string, databaseVersion: string, startDate: string): WorldState {
   const rng = Rng.fromString(`world:${seed}`);
@@ -31,18 +32,21 @@ export function generateWorld(seed: string, databaseVersion: string, startDate: 
       let orgId: string | null;
       if (qualityRoll > 0.93) {
         quality = rng.int(82, 96);
-        orgId = "sfc";
-      } else if (qualityRoll > 0.75) {
+        orgId = "ufc";
+      } else if (qualityRoll > 0.78) {
         quality = rng.int(68, 84);
-        orgId = rng.chance(0.6) ? "sfc" : "gfl";
-      } else if (qualityRoll > 0.45) {
-        quality = rng.int(55, 72);
-        // La tranche "confirmee" va surtout en GFL : ACS reste un vrai
-        // tremplin d'entree, pas un gatekeeper systematique pour un debutant.
-        orgId = rng.chance(0.75) ? "gfl" : "acs";
+        orgId = rng.chance(0.6) ? "ufc" : "pfl";
+      } else if (qualityRoll > 0.55) {
+        quality = rng.int(58, 72);
+        orgId = rng.chance(0.6) ? "pfl" : "ksw";
+      } else if (qualityRoll > 0.3) {
+        quality = rng.int(45, 62);
+        // La tranche "confirmee" va surtout en KSW : Cage Warriors reste un
+        // vrai tremplin d'entree, pas un gatekeeper systematique pour un debutant.
+        orgId = rng.chance(0.65) ? "ksw" : "cw";
       } else {
-        quality = rng.int(35, 58);
-        orgId = "acs";
+        quality = rng.int(35, 55);
+        orgId = "cw";
       }
 
       const fighter = generateNpcFighter(
