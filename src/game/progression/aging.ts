@@ -34,7 +34,7 @@ export function applyAgingTick(fighter: Fighter, age: number, days: number, rng:
     attributes[key] = clamp(attributes[key] + (towardPotential * rate * learnerMod + decline) * monthsFraction + noise * monthsFraction);
   }
 
-  const wearIncrease = Math.max(0, rate < 0 ? 0.12 : 0.02) * monthsFraction;
+  const wearIncrease = Math.max(0, rate < 0 ? 0.05 : 0.01) * monthsFraction;
 
   return {
     ...fighter,

@@ -5,6 +5,7 @@ import { rebuildAllRankings } from "@/game/ranking/rankings";
 import { generateNpcFighter, ageFromDob } from "@/game/fighter/generate";
 import { NATIONALITIES } from "@/data/names";
 import { WEIGHT_CLASSES } from "@/data/organizations/weightClasses";
+import { REGIONAL_ORG_IDS } from "@/data/organizations";
 import { applyAgingTick } from "@/game/progression/aging";
 
 function addDays(date: string, days: number): string {
@@ -103,7 +104,7 @@ export function advanceWorld(world: WorldState, days: number, rng: Rng, excludeF
         quality: rng.int(40, 70),
         age: rng.int(18, 22),
         worldDate: newDate,
-        organizationId: rng.chance(0.7) ? "cw" : null,
+        organizationId: rng.chance(0.7) ? rng.pick(REGIONAL_ORG_IDS) : null,
       },
       rng,
     );

@@ -1,6 +1,6 @@
 import type { Fighter, Organization, Title, WorldState } from "@/types";
 import { Rng } from "@/game/rng/prng";
-import { ORGANIZATIONS } from "@/data/organizations";
+import { ORGANIZATIONS, REGIONAL_ORG_IDS, MID_ORG_IDS } from "@/data/organizations";
 import { WEIGHT_CLASSES } from "@/data/organizations/weightClasses";
 import { NATIONALITIES } from "@/data/names";
 import { generateNpcFighter } from "@/game/fighter/generate";
@@ -11,7 +11,9 @@ import { REAL_UFC_ROSTER } from "@/data/fighters/realRoster";
 // Assez de combattants par categorie pour offrir un vrai bassin
 // d'adversaires coherents (gatekeepers, milieu de classement, contenders)
 // plutot qu'une poignee de noms ou tout le monde finit "classe" d'office.
-const FIGHTERS_PER_WEIGHT_CLASS = 26;
+// Releve pour repartir sur 7 organisations sans que chacune ne se
+// retrouve avec un roster trop clairseme.
+const FIGHTERS_PER_WEIGHT_CLASS = 46;
 
 /**
  * Cree un snapshot initial du monde (section 7/122) : le vrai roster n'est
@@ -28,27 +30,29 @@ export function generateWorld(seed: string, databaseVersion: string, startDate: 
     for (let i = 0; i < FIGHTERS_PER_WEIGHT_CLASS; i++) {
       const nat = rng.pick(NATIONALITIES);
       const age = rng.int(20, 37);
-      // Distribution de qualite : quelques elites, beaucoup de gatekeepers.
+      // Distribution de qualite : quelques elites, beaucoup de gatekeepers,
+      // repartis sur les 3 paliers (regional / confirme / elite).
       const qualityRoll = rng.next();
       let quality: number;
       let orgId: string | null;
-      if (qualityRoll > 0.93) {
+      if (qualityRoll > 0.95) {
         quality = rng.int(82, 96);
         orgId = "ufc";
-      } else if (qualityRoll > 0.78) {
-        quality = rng.int(68, 84);
-        orgId = rng.chance(0.6) ? "ufc" : "pfl";
-      } else if (qualityRoll > 0.55) {
-        quality = rng.int(58, 72);
-        orgId = rng.chance(0.6) ? "pfl" : "ksw";
-      } else if (qualityRoll > 0.3) {
-        quality = rng.int(45, 62);
-        // La tranche "confirmee" va surtout en KSW : Cage Warriors reste un
-        // vrai tremplin d'entree, pas un gatekeeper systematique pour un debutant.
-        orgId = rng.chance(0.65) ? "ksw" : "cw";
+      } else if (qualityRoll > 0.85) {
+        quality = rng.int(70, 86);
+        orgId = rng.chance(0.55) ? "ufc" : rng.pick(MID_ORG_IDS);
+      } else if (qualityRoll > 0.65) {
+        quality = rng.int(58, 74);
+        orgId = rng.pick(MID_ORG_IDS);
+      } else if (qualityRoll > 0.45) {
+        quality = rng.int(48, 64);
+        orgId = rng.chance(0.5) ? rng.pick(MID_ORG_IDS) : rng.pick(REGIONAL_ORG_IDS);
+      } else if (qualityRoll > 0.2) {
+        quality = rng.int(38, 55);
+        orgId = rng.pick(REGIONAL_ORG_IDS);
       } else {
-        quality = rng.int(35, 55);
-        orgId = "cw";
+        quality = rng.int(30, 48);
+        orgId = rng.pick(REGIONAL_ORG_IDS);
       }
 
       const fighter = generateNpcFighter(
