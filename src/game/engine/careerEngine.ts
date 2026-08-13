@@ -22,6 +22,7 @@ import { generateEpilogue } from "@/game/legacy/epilogue";
 import { getOrganization } from "@/data/organizations";
 import { getRankPosition, rebuildAllRankings } from "@/game/ranking/rankings";
 import type { CareerMoment } from "@/types";
+import { computeOverall } from "@/types";
 import { getOrigin } from "@/data/creation/origins";
 import { getEntourage } from "@/data/creation/entourages";
 
@@ -198,7 +199,17 @@ function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
       if (champion) return champion;
     }
   }
-  return rng.pick(candidates);
+
+  // Matchmaking par niveau (section 99/136) : un debutant ne doit pas
+  // tomber sur le pire veteran du roster par pur hasard. On favorise les
+  // adversaires de niveau proche, sans exclure totalement les ecarts
+  // (permet aussi bien la fois "short notice" difficile que la bonne
+  // surprise contre plus fort qu'annonce).
+  const playerOverall = computeOverall(state.fighter.attributes);
+  return rng.weightedPick(candidates, (c) => {
+    const diff = Math.abs(computeOverall(c.attributes) - playerOverall);
+    return Math.exp(-diff / 14) + 0.05;
+  });
 }
 
 /**

@@ -34,7 +34,9 @@ export function generateWorld(seed: string, databaseVersion: string, startDate: 
         orgId = rng.chance(0.6) ? "sfc" : "gfl";
       } else if (qualityRoll > 0.45) {
         quality = rng.int(55, 72);
-        orgId = rng.chance(0.5) ? "gfl" : "acs";
+        // La tranche "confirmee" va surtout en GFL : ACS reste un vrai
+        // tremplin d'entree, pas un gatekeeper systematique pour un debutant.
+        orgId = rng.chance(0.75) ? "gfl" : "acs";
       } else {
         quality = rng.int(35, 58);
         orgId = "acs";
