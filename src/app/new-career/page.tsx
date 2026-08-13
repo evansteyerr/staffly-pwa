@@ -11,6 +11,7 @@ import { ORIGINS } from "@/data/creation/origins";
 import { LIFESTYLES } from "@/data/creation/lifestyles";
 import { ENTOURAGES } from "@/data/creation/entourages";
 import { weightClassesForGender } from "@/data/organizations/weightClasses";
+import { computeStartingQualityScore, scoreToStars } from "@/game/fighter/startingQuality";
 import type { Gender, StyleId, OriginId, LifestyleId, EntourageId } from "@/types";
 
 const STEPS = ["nationalite", "identite", "categorie", "style", "origine", "mode_de_vie", "entourage", "resume"] as const;
@@ -39,6 +40,12 @@ export default function NewCareerPage() {
   const [entourageId, setEntourageId] = useState<EntourageId>("family");
 
   const weightClasses = useMemo(() => weightClassesForGender(gender), [gender]);
+
+  const startingStars = useMemo(
+    () => scoreToStars(computeStartingQualityScore({ styleId, originId, lifestyleId, entourageId })),
+    [styleId, originId, lifestyleId, entourageId],
+  );
+  const showStars = stepIndex >= STEPS.indexOf("style");
 
   function randomizeName() {
     const nat = getNationality(nationalityCode);
@@ -87,6 +94,13 @@ export default function NewCareerPage() {
           <div key={s} className={`h-1 flex-1 rounded-full ${i <= stepIndex ? "bg-accent-gold" : "bg-surface-2"}`} />
         ))}
       </div>
+
+      {showStars && (
+        <div className="flex items-center justify-between rounded-xl border border-border bg-surface-2 px-4 py-2">
+          <span className="text-xs uppercase tracking-widest text-muted">Profil de depart</span>
+          <StarRating stars={startingStars} />
+        </div>
+      )}
 
       {step === "nationalite" && (
         <StepBlock title="Nationalite" subtitle="D'ou vient ton combattant ?">
@@ -247,6 +261,18 @@ export default function NewCareerPage() {
         )}
       </div>
     </main>
+  );
+}
+
+function StarRating({ stars }: { stars: number }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${stars} sur 5 etoiles`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span key={n} className={n <= stars ? "text-accent-gold" : "text-border"}>
+          ★
+        </span>
+      ))}
+    </div>
   );
 }
 

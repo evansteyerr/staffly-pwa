@@ -235,12 +235,24 @@ function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
   // "short notice" difficile ou une bonne surprise), mais fortement.
   const playerOverall = computeOverall(state.fighter.attributes);
   const playerFights = totalFights(state.fighter);
+  const playerRankNum = typeof playerRank === "number" ? playerRank : playerRank === "champion" ? 0 : null;
+
   return rng.weightedPick(pool, (c) => {
     const skillDiff = Math.abs(computeOverall(c.attributes) - playerOverall);
     const experienceDiff = Math.abs(totalFights(c) - playerFights);
     const skillWeight = Math.exp(-skillDiff / 13);
     const experienceWeight = Math.exp(-experienceDiff / 2.5);
-    return skillWeight * experienceWeight + 0.015;
+
+    // Une fois classe, on affronte des adversaires de classement proche
+    // (ex : #10 affronte plutot des #7-13 qu'un inconnu du bas de tableau).
+    let rankWeight = 1;
+    if (playerRankNum !== null) {
+      const oppRank = getRankPosition(state.worldState, c);
+      const oppRankNum = typeof oppRank === "number" ? oppRank : oppRank === "champion" ? 0 : null;
+      rankWeight = oppRankNum !== null ? Math.exp(-Math.abs(oppRankNum - playerRankNum) / 4) + 0.1 : 0.3;
+    }
+
+    return skillWeight * experienceWeight * rankWeight + 0.01;
   });
 }
 
@@ -275,7 +287,7 @@ export function advanceTurn(state: CareerState): CareerState {
     (new Date(state.worldDate).getTime() - new Date(retirementHistory.lastFiredOn).getTime()) / 86400000 >= 180;
   if (retirementCooldownOk && rng.chance(retirementCheckProbability(age, state.fighter.careerWear))) {
     const evt = buildRetirementEvent();
-    return pushRng(activateEvent(state, evt), rng);
+    return pushRng(activateEvent(state, evt, rng), rng);
   }
 
   const due = state.pendingFollowUps.find((f) => f.fireOn <= state.worldDate);
@@ -283,7 +295,7 @@ export function advanceTurn(state: CareerState): CareerState {
     const template = ALL_EVENTS.find((e) => e.id === due.eventId);
     const pendingFollowUps = state.pendingFollowUps.filter((f) => f !== due);
     if (template) {
-      return pushRng(activateEvent({ ...state, pendingFollowUps }, template), rng);
+      return pushRng(activateEvent({ ...state, pendingFollowUps }, template, rng), rng);
     }
     state = { ...state, pendingFollowUps };
   }
@@ -327,7 +339,7 @@ export function advanceTurn(state: CareerState): CareerState {
     const advanced = { ...state, worldDate: addDays(state.worldDate, 80) };
     return pushRng(advanced, rng);
   }
-  return pushRng(activateEvent(state, event), rng);
+  return pushRng(activateEvent(state, event, rng), rng);
 }
 
 export function resolveEventChoice(state: CareerState, choiceId: string): CareerState {

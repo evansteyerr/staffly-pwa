@@ -5,9 +5,11 @@ de decisions et de combats, et decouvre l'histoire unique que ta carriere
 va ecrire. Voir `docs/ARCHITECTURE.md` pour l'architecture complete, la
 boucle de gameplay et le plan de developpement par versions.
 
-Univers, organisations (`Apex Cage Series`, `Global Fight League`,
-`Supreme Fighting Championship`) et combattants sont entierement fictifs
-pour ce MVP — voir la section 128 de `docs/ARCHITECTURE.md`.
+L'univers utilise les noms de vraies organisations (Cage Warriors, KSW,
+PFL, UFC) comme decor, mais le roster de combattants, les classements et
+toutes les statistiques sont entierement simules — aucune donnee
+officielle, aucun combattant reel, aucun visuel proprietaire. Voir la
+section 5/128 de `docs/ARCHITECTURE.md`.
 
 ## Demarrer
 

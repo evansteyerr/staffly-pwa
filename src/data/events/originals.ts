@@ -1,0 +1,167 @@
+import type { EventTemplate } from "@/types";
+
+/**
+ * Deuxieme vague de contenu original (section 111/147), pour continuer a
+ * diversifier le pool sans jamais toucher au moteur.
+ */
+export const ORIGINAL_EVENTS: EventTemplate[] = [
+  {
+    id: "weighin_staredown_incident",
+    category: "rivalry",
+    title: "Le face-a-face de la pesee degenere",
+    description: "{opponentName} s'approche trop pres pendant la pesee. La securite doit intervenir.",
+    weight: 3,
+    cooldownDays: 99999,
+    maxOccurrences: 1,
+    choices: [
+      {
+        id: "hold_ground",
+        label: "Tenir ta position sans reculer",
+        visibleEffects: { confidence: 6, popularity: 4 },
+        successLabel: "L'image fait le tour des reseaux : tu n'as pas flanche.",
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+      {
+        id: "let_it_go",
+        label: "Laisser la securite gerer et sourire",
+        visibleEffects: { reputation: 5 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+    ],
+  },
+  {
+    id: "anti_doping_control",
+    category: "scandal",
+    title: "Controle antidopage inopine",
+    description: "Un controle surprise tombe en pleine preparation. Rien d'inhabituel, mais ca met la pression.",
+    minPopularity: 15,
+    weight: 2,
+    cooldownDays: 99999,
+    maxOccurrences: 1,
+    choices: [
+      {
+        id: "cooperate",
+        label: "Cooperer pleinement et sans stress",
+        visibleEffects: { reputation: 4 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+      {
+        id: "annoyed",
+        label: "Montrer ton agacement publiquement",
+        visibleEffects: { popularity: -2 },
+        hiddenEffects: { promoterTrust: -4 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+    ],
+  },
+  {
+    id: "walkout_song_choice",
+    category: "fame",
+    title: "Il est temps de choisir ta musique d'entree",
+    description: "Chaque combattant a la sienne. Quel morceau va t'accompagner jusqu'a la cage ?",
+    minPopularity: 8,
+    weight: 3,
+    cooldownDays: 99999,
+    maxOccurrences: 1,
+    choices: [
+      {
+        id: "aggressive_track",
+        label: "Un morceau agressif et sombre",
+        visibleEffects: { confidence: 4, popularity: 2 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+      {
+        id: "local_track",
+        label: "Un titre qui represente tes origines",
+        visibleEffects: { popularity: 5, reputation: 2 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+    ],
+  },
+  {
+    id: "old_rival_resurfaces",
+    category: "rivalry",
+    title: "Un vieux rival refait surface",
+    description: "{opponentName}, que tu pensais avoir laisse derriere toi, relance la rivalite dans une interview.",
+    minAge: 22,
+    weight: 3,
+    cooldownDays: 99999,
+    maxOccurrences: 1,
+    choices: [
+      {
+        id: "call_for_rematch",
+        label: "Demander publiquement la revanche",
+        visibleEffects: { popularity: 7 },
+        hiddenEffects: { promoterTrust: 3 },
+        timeAdvanceDaysMin: 3,
+        timeAdvanceDaysMax: 7,
+      },
+      {
+        id: "let_results_speak",
+        label: "Dire que tes resultats parlent pour toi",
+        visibleEffects: { reputation: 5 },
+        timeAdvanceDaysMin: 3,
+        timeAdvanceDaysMax: 7,
+      },
+    ],
+  },
+  {
+    id: "locker_room_speech",
+    category: "mental",
+    title: "On te demande de parler au vestiaire",
+    description: "Avant une grande soiree, les autres combattants du club te demandent quelques mots.",
+    minPopularity: 20,
+    weight: 2,
+    cooldownDays: 99999,
+    maxOccurrences: 1,
+    choices: [
+      {
+        id: "inspire",
+        label: "Livrer un discours sincere",
+        visibleEffects: { reputation: 6 },
+        hiddenEffects: { relationshipGym: 6 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+      {
+        id: "stay_humble",
+        label: "Rester bref, laisser les actes parler",
+        visibleEffects: { relationshipGym: 3 },
+        timeAdvanceDaysMin: 1,
+        timeAdvanceDaysMax: 3,
+      },
+    ],
+  },
+  {
+    id: "controversial_decision_aftermath",
+    category: "media",
+    title: "Une decision controversee fait parler",
+    description: "Le resultat serre de ton dernier combat continue de diviser les observateurs des semaines apres.",
+    weight: 2,
+    cooldownDays: 99999,
+    maxOccurrences: 1,
+    choices: [
+      {
+        id: "defend_result",
+        label: "Defendre fermement le resultat",
+        visibleEffects: { confidence: 4 },
+        hiddenEffects: { mediaPressure: 3 },
+        timeAdvanceDaysMin: 3,
+        timeAdvanceDaysMax: 7,
+      },
+      {
+        id: "call_for_rematch_clause",
+        label: "Proposer toi-meme une revanche",
+        visibleEffects: { reputation: 6, popularity: 3 },
+        timeAdvanceDaysMin: 3,
+        timeAdvanceDaysMax: 7,
+      },
+    ],
+  },
+];

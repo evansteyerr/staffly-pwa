@@ -14,13 +14,15 @@ export default function RetirementPage() {
   const router = useRouter();
   const career = useCareerStore((s) => s.career);
   const abandonCareer = useCareerStore((s) => s.abandonCareer);
+  const hasHydrated = useCareerStore((s) => s.hasHydrated);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!career) router.replace("/");
     else if (!career.retired) router.replace("/career");
-  }, [career, router]);
+  }, [career, hasHydrated, router]);
 
-  if (!career || !career.retired) return null;
+  if (!hasHydrated || !career || !career.retired) return null;
 
   const { fighter } = career;
   const nat = getNationality(fighter.nationality);

@@ -42,6 +42,8 @@ export const MONEY_EVENTS: EventTemplate[] = [
         successChance: 0.45,
         visibleEffects: { money: 4000 },
         onFailure: { money: -2500, stress: 8 },
+        successLabel: "Bon pari. Le projet decolle et te rapporte gros.",
+        failureLabel: "Le projet capote. Tu perds une bonne partie de la mise.",
         timeAdvanceDaysMin: 30,
         timeAdvanceDaysMax: 60,
       },

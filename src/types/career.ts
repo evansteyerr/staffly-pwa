@@ -57,6 +57,7 @@ export interface CareerState {
 
   flags: string[];
   activeEvent: ActiveEvent | null;
+  lastEventOutcome?: import("./events").EventOutcome | null;
   pendingFollowUps: ScheduledEvent[];
   eventHistory: Record<string, { lastFiredOn: string; count: number }>;
 

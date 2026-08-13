@@ -59,6 +59,18 @@ export interface EventChoice {
   /** Chance (0-1) que ce choix "réussisse" (ex: négociation) ; sinon un choix d'échec alternatif est appliqué. */
   successChance?: number;
   onFailure?: Partial<EffectBag>;
+  /** Texte affiché sur l'écran de résultat si le jet de succès réussit/échoue. */
+  successLabel?: string;
+  failureLabel?: string;
+}
+
+/** Résultat d'un choix, affiché sur l'écran de résumé avant de continuer (section 94). */
+export interface EventOutcome {
+  eventTitle: string;
+  choiceLabel: string;
+  resultLabel: string;
+  success: boolean | null;
+  effects: Partial<EffectBag>;
 }
 
 export interface EventTemplate {

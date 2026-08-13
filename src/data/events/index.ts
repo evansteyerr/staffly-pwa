@@ -5,6 +5,7 @@ import { SOCIAL_EVENTS } from "./social";
 import { CAREER_EVENTS } from "./career";
 import { EXPANSION_EVENTS } from "./expansion";
 import { FILLER_EVENTS } from "./filler";
+import { ORIGINAL_EVENTS } from "./originals";
 
 export const ALL_EVENTS: EventTemplate[] = [
   ...TRAINING_EVENTS,
@@ -13,4 +14,5 @@ export const ALL_EVENTS: EventTemplate[] = [
   ...CAREER_EVENTS,
   ...EXPANSION_EVENTS,
   ...FILLER_EVENTS,
+  ...ORIGINAL_EVENTS,
 ];

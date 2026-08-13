@@ -65,7 +65,7 @@ export function advanceWorld(world: WorldState, days: number, rng: Rng, excludeF
       careerWear: Math.min(100, loser.careerWear + rng.float(2, 5)),
     };
 
-    if (fighterA.organizationId === "sfc" && rng.chance(0.15)) {
+    if (fighterA.organizationId === "ufc" && rng.chance(0.15)) {
       news.push({
         id: `news-${newDate}-${winner.id}`,
         date: newDate,
@@ -103,7 +103,7 @@ export function advanceWorld(world: WorldState, days: number, rng: Rng, excludeF
         quality: rng.int(40, 70),
         age: rng.int(18, 22),
         worldDate: newDate,
-        organizationId: rng.chance(0.7) ? "acs" : null,
+        organizationId: rng.chance(0.7) ? "cw" : null,
       },
       rng,
     );
