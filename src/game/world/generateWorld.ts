@@ -5,6 +5,8 @@ import { WEIGHT_CLASSES } from "@/data/organizations/weightClasses";
 import { NATIONALITIES } from "@/data/names";
 import { generateNpcFighter } from "@/game/fighter/generate";
 import { rebuildAllRankings } from "@/game/ranking/rankings";
+import { convertRealRoster } from "@/game/fighter/importRealFighter";
+import { REAL_UFC_ROSTER } from "@/data/fighters/realRoster";
 
 // Assez de combattants par categorie pour offrir un vrai bassin
 // d'adversaires coherents (gatekeepers, milieu de classement, contenders)
@@ -63,6 +65,12 @@ export function generateWorld(seed: string, databaseVersion: string, startDate: 
       );
       fighters[fighter.id] = fighter;
     }
+  }
+
+  // Roster reel (section 5/122) : injecte a cote du roster simule des que
+  // des entrees valides existent dans data/fighters/realRoster.ts.
+  for (const realFighter of convertRealRoster(REAL_UFC_ROSTER, seed, startDate)) {
+    fighters[realFighter.id] = realFighter;
   }
 
   const organizations: Organization[] = ORGANIZATIONS;

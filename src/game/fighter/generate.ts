@@ -16,11 +16,11 @@ const CONTRADICTING_TRAITS: Partial<Record<HiddenTrait, HiddenTrait[]>> = {
   early_peak: ["late_bloomer"],
 };
 
-function clamp(n: number, min = 1, max = 99): number {
+export function clamp(n: number, min = 1, max = 99): number {
   return Math.max(min, Math.min(max, Math.round(n)));
 }
 
-function baseAttributes(rng: Rng, center: number, spread: number): AttributeBlock {
+export function baseAttributes(rng: Rng, center: number, spread: number): AttributeBlock {
   const block = {} as AttributeBlock;
   for (const key of ATTRIBUTE_KEYS) {
     block[key] = clamp(rng.gaussian(center, spread));
