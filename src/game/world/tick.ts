@@ -5,7 +5,7 @@ import { rebuildAllRankings } from "@/game/ranking/rankings";
 import { generateNpcFighter, ageFromDob } from "@/game/fighter/generate";
 import { NATIONALITIES } from "@/data/names";
 import { WEIGHT_CLASSES } from "@/data/organizations/weightClasses";
-import { REGIONAL_ORG_IDS } from "@/data/organizations";
+import { REGIONAL_ORG_IDS, MID_ORG_IDS } from "@/data/organizations";
 import { applyAgingTick } from "@/game/progression/aging";
 
 function addDays(date: string, days: number): string {
@@ -96,6 +96,13 @@ export function advanceWorld(world: WorldState, days: number, rng: Rng, excludeF
   for (let i = 0; i < prospectsToAdd; i++) {
     const wc = rng.pick(WEIGHT_CLASSES);
     const nat = rng.pick(NATIONALITIES);
+    // Les nouveaux prospects ne doivent pas tous atterrir en regional
+    // (bug identifie via sonde) : sans apport direct au palier mid, un
+    // roster oktagon/ksw/pfl qui s'etiole par les retraites ne se
+    // reconstitue jamais, et un combattant sous contrat peut se retrouver
+    // sans aucun adversaire possible dans sa categorie pendant des annees.
+    const orgRoll = rng.next();
+    const organizationId = orgRoll > 0.85 ? rng.pick(MID_ORG_IDS) : orgRoll > 0.15 ? rng.pick(REGIONAL_ORG_IDS) : null;
     const prospect = generateNpcFighter(
       {
         nationalityCode: nat.code,
@@ -104,7 +111,7 @@ export function advanceWorld(world: WorldState, days: number, rng: Rng, excludeF
         quality: rng.int(40, 70),
         age: rng.int(18, 22),
         worldDate: newDate,
-        organizationId: rng.chance(0.7) ? rng.pick(REGIONAL_ORG_IDS) : null,
+        organizationId,
       },
       rng,
     );

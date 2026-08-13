@@ -39,34 +39,51 @@ export function generateContractOffers(state: CareerState, rng: Rng): ContractOf
 
   const minTierRank = highestTierReached(state);
 
-  const eligible: ContractOffer[] = [];
-  for (const org of ORGANIZATIONS) {
-    if (TIER_RANK[org.tier] < minTierRank) continue; // plus de petites organisations une fois monte
-    const eligibility = strength - org.recruitmentDifficulty;
-    // Un debutant sans palmares doit d'abord faire ses preuves en regional
-    // (section 39/99) : les paliers mid/elite se meritent avec des victoires,
-    // de la popularite et de la reputation, pas juste un profil correct.
-    const minEligibility = org.tier === "elite" ? 20 : org.tier === "mid" ? 0 : -Infinity;
-    if (eligibility < minEligibility) continue;
-    if (state.contract?.organizationId === org.id) continue;
+  // Repere concret pour l'UFC (section demandee) : au-dela de 10 victoires
+  // avec un bilan sain, on devient un "prospect" repere par le Graal — pas
+  // besoin d'attendre un score continu de "strength" tres eleve. Un bilan
+  // limite (ex : 10 victoires pour 9 defaites) ne suffit pas.
+  const isProspectRecord = fighter.record.wins >= 10 && winRate >= 0.6;
 
-    const tierMultiplier = org.tier === "elite" ? 3.2 : org.tier === "mid" ? 1.6 : 1;
-    const baseShow = Math.max(400, Math.round((strength * 60 + rng.int(-300, 300)) * tierMultiplier * experienceMultiplier));
-    const baseWin = Math.round(baseShow * 0.9);
-    const fights = org.contractStyle === "guaranteed" ? rng.int(3, 4) : rng.int(3, 5);
+  function collectEligible(enforceTierLock: boolean): ContractOffer[] {
+    const list: ContractOffer[] = [];
+    for (const org of ORGANIZATIONS) {
+      if (enforceTierLock && TIER_RANK[org.tier] < minTierRank) continue; // plus de petites organisations une fois monte
+      const eligibility = strength - org.recruitmentDifficulty;
+      // Un debutant sans palmares doit d'abord faire ses preuves en regional
+      // (section 39/99) : les paliers mid/elite se meritent avec des victoires,
+      // de la popularite et de la reputation, pas juste un profil correct.
+      const minEligibility = org.tier === "elite" ? 20 : org.tier === "mid" ? 0 : -Infinity;
+      const meetsWinCountBar = org.tier === "elite" && isProspectRecord;
+      if (eligibility < minEligibility && !meetsWinCountBar) continue;
+      if (state.contract?.organizationId === org.id) continue;
 
-    eligible.push({
-      id: `offer-${org.id}-${state.worldDate}-${rng.int(0, 999999)}`,
-      organizationId: org.id,
-      fights,
-      showMoney: baseShow,
-      winBonus: baseWin,
-      guaranteed: org.contractStyle === "guaranteed" ? baseShow * fights : undefined,
-      prestigeStars: Math.max(1, Math.round(org.prestige / 20)),
-      oppositionStars: Math.max(1, Math.round(org.rosterQuality / 20)),
-    });
+      const tierMultiplier = org.tier === "elite" ? 3.2 : org.tier === "mid" ? 1.6 : 1;
+      const baseShow = Math.max(400, Math.round((strength * 60 + rng.int(-300, 300)) * tierMultiplier * experienceMultiplier));
+      const baseWin = Math.round(baseShow * 0.9);
+      const fights = org.contractStyle === "guaranteed" ? rng.int(3, 4) : rng.int(3, 5);
+
+      list.push({
+        id: `offer-${org.id}-${state.worldDate}-${rng.int(0, 999999)}`,
+        organizationId: org.id,
+        fights,
+        showMoney: baseShow,
+        winBonus: baseWin,
+        guaranteed: org.contractStyle === "guaranteed" ? baseShow * fights : undefined,
+        prestigeStars: Math.max(1, Math.round(org.prestige / 20)),
+        oppositionStars: Math.max(1, Math.round(org.rosterQuality / 20)),
+      });
+    }
+    return list;
   }
 
+  // Verrouillage de palier applique en priorite, mais jamais au prix d'une
+  // agence libre sans fin (section demandee : augmenter drastiquement le
+  // nombre de combats) — un combattant qui ne trouve plus preneur en haut
+  // doit pouvoir "redescendre" reprendre du rythme, comme une vraie
+  // relegation, plutot que de rester sans contrat jusqu'a 40 ans.
+  let eligible = collectEligible(true);
+  if (eligible.length === 0) eligible = collectEligible(false);
   if (eligible.length === 0) return [];
 
   // Seules quelques organisations demarchent en meme temps (1 a 3), jamais

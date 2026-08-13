@@ -143,12 +143,26 @@ function addDays(date: string, days: number): string {
 
 /**
  * Multiplicateur global du temps qui passe entre deux evenements
- * (section 3) : une carriere complete doit tenir en ~10 minutes de jeu,
- * donc chaque decision doit couvrir plusieurs mois de temps in-fiction
- * plutot que quelques jours. Un seul reglage ici plutot que de retoucher
- * chaque duree dans chaque fichier de contenu.
+ * (section 3) : une carriere complete doit tenir en quelques minutes de
+ * jeu, donc chaque decision couvre plusieurs semaines/mois de temps
+ * in-fiction plutot que quelques jours. Un seul reglage ici plutot que de
+ * retoucher chaque duree dans chaque fichier de contenu. Baisse par
+ * rapport a la version precedente (19) car un multiplicateur trop fort
+ * grignotait le temps de jeu disponible pour combattre — une carriere
+ * finissait a peine a 15 combats a la retraite au lieu de 25-30 (section
+ * demandee).
  */
-const EVENT_TIME_SCALE = 19;
+const EVENT_TIME_SCALE = 10;
+
+/**
+ * L'evenement "retraite ?" (section demandee) n'est pas un choix narratif
+ * ordinaire mais une simple deliberation courte : le multiplicateur global
+ * ne doit pas s'y appliquer, sinon une seule reponse ("tenter un dernier
+ * run") peut engloutir jusqu'a un an et demi de carriere en fin de vie
+ * sportive, exactement quand le joueur a le plus besoin de continuer a
+ * combattre pour atteindre un vrai palmares.
+ */
+const UNSCALED_EVENT_CATEGORIES = new Set(["retirement"]);
 
 export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): CareerState {
   const template = state.activeEvent!.template;
@@ -168,7 +182,8 @@ export function applyChoice(state: CareerState, choice: EventChoice, rng: Rng): 
   choice.setFlags?.forEach((f) => flags.add(f));
   choice.removeFlags?.forEach((f) => flags.delete(f));
 
-  const timeAdvance = rng.int(choice.timeAdvanceDaysMin, choice.timeAdvanceDaysMax) * EVENT_TIME_SCALE;
+  const scale = UNSCALED_EVENT_CATEGORIES.has(template.category) ? 1 : EVENT_TIME_SCALE;
+  const timeAdvance = rng.int(choice.timeAdvanceDaysMin, choice.timeAdvanceDaysMax) * scale;
   const worldDate = addDays(next.worldDate, timeAdvance);
 
   const pendingFollowUps = [...next.pendingFollowUps];

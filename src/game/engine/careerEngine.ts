@@ -206,8 +206,14 @@ function totalFights(f: Fighter): number {
  */
 const MIN_FIGHTS_FOR_TITLE_SHOT = 8;
 
-/** Minimum de jours entre deux combats (avant camp) : au plus ~3 combats par an. */
-const MIN_DAYS_BETWEEN_FIGHTS = 85;
+/**
+ * Minimum de jours entre deux combats (avant camp) : garde un rythme
+ * plausible (pas plus de ~3-4 combats par an une fois le camp de 21-42
+ * jours ajoute), tout en laissant assez de place pour atteindre un vrai
+ * palmares de fin de carriere (25-30 combats, section demandee) sur une
+ * fenetre active de 15-20 ans.
+ */
+const MIN_DAYS_BETWEEN_FIGHTS = 60;
 
 /**
  * Prime "Fight/Performance of the Night" (section demandee) : le budget
@@ -365,7 +371,28 @@ export function advanceTurn(state: CareerState): CareerState {
     const fightChance = daysSinceLastFight < MIN_DAYS_BETWEEN_FIGHTS ? 0 : Math.min(1, 0.92 + state.ticksSinceLastFight * 0.5);
     if (rng.chance(fightChance)) {
       const opponent = pickOpponent(state, rng);
-      if (opponent) {
+      if (!opponent) {
+        // Aucun adversaire dispo dans cette organisation/categorie de poids
+        // (roster epuise cote monde simule) : plutot que de laisser le
+        // combattant bloque sous un contrat mort jusqu'a la retraite
+        // (bug identifie via sonde — un contrat sans adversaire pouvait
+        // durer 15+ ans sans un seul combat), on libere le contrat pour
+        // qu'il en retrouve un ailleurs des le prochain tour. Le temps doit
+        // avancer ici (et le monde simule tourner) : sinon un cycle
+        // signature->liberation peut boucler indefiniment sur la meme date
+        // si la meme organisation vide est reproposee (bug egalement
+        // identifie via sonde — carriere bloquee a 2000 iterations sans
+        // jamais atteindre la retraite).
+        const daysPassed = rng.int(20, 40);
+        const worldDate = addDays(state.worldDate, daysPassed);
+        const worldTicked = advanceWorld(state.worldState, daysPassed, rng, state.fighter.id);
+        const agedFighter = applyAgingTick(state.fighter, ageFromDob(state.fighter.dateOfBirth, worldDate), daysPassed, rng);
+        let next: CareerState = { ...state, fighter: agedFighter, worldState: worldTicked, worldDate, contract: null };
+        next = syncPlayerIntoWorld(next);
+        next = enforceHardRetirementAge(next, rng);
+        return pushRng(next, rng);
+      }
+      {
         const org = getOrganization(state.fighter.organizationId!);
         const playerRank = getRankPosition(state.worldState, state.fighter);
         const hasEnoughFightsForTitle = totalFights(state.fighter) >= MIN_FIGHTS_FOR_TITLE_SHOT;

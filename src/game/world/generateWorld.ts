@@ -13,7 +13,7 @@ import { REAL_UFC_ROSTER } from "@/data/fighters/realRoster";
 // plutot qu'une poignee de noms ou tout le monde finit "classe" d'office.
 // Releve pour repartir sur 7 organisations sans que chacune ne se
 // retrouve avec un roster trop clairseme.
-const FIGHTERS_PER_WEIGHT_CLASS = 46;
+const FIGHTERS_PER_WEIGHT_CLASS = 64;
 
 /**
  * Cree un snapshot initial du monde (section 7/122) : le vrai roster n'est
