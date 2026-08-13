@@ -147,7 +147,13 @@ export function generateNpcFighter(input: NpcGenerationInput, rng: Rng): Fighter
   const stances: Stance[] = ["orthodox", "southpaw", "switch"];
 
   const winRate = clamp(rng.gaussian(input.quality, 10), 20, 95) / 100;
-  const fights = Math.max(0, Math.round(input.age - 18) * rng.int(1, 3));
+  // Rythme realiste d'une carriere MMA pro (debut vers 20 ans, 1 a 2-3
+  // combats/an selon activite) plutot qu'une formule qui explosait avec
+  // l'age — sinon il n'existe plus aucun adversaire "jeune pro" credible
+  // pour un debutant (section 99/136).
+  const proYears = Math.max(0, input.age - 20);
+  const fightsPerYear = rng.float(0.8, 2.4);
+  const fights = Math.min(40, Math.round(proYears * fightsPerYear));
   const wins = Math.round(fights * winRate);
   const losses = fights - wins;
 

@@ -1,6 +1,18 @@
 import type { Fighter, Organization, RankingBoard, WeightClass, WorldState } from "@/types";
 
 /**
+ * Nombre minimum de combats professionnels (dans l'organisation) pour
+ * apparaitre dans un classement (section 44/99) : comme en vrai MMA, on ne
+ * devient pas classe #10 sur sa seule signature, il faut d'abord prouver
+ * quelque chose dans la cage.
+ */
+export const RANK_ELIGIBLE_MIN_FIGHTS = 3;
+
+export function isRankEligible(fighter: Fighter): boolean {
+  return fighter.record.wins + fighter.record.losses + fighter.record.draws >= RANK_ELIGIBLE_MIN_FIGHTS;
+}
+
+/**
  * Score de classement (section 45) : qualite des victoires + activite +
  * finish rate + momentum + ancien classement, popularite = facteur mineur.
  */
@@ -33,7 +45,7 @@ export function rebuildRankingBoard(
   previousChampionId: string | null,
 ): RankingBoard {
   const roster = fighters.filter(
-    (f) => f.organizationId === organization.id && f.weightClass === weightClass.id && !f.retired,
+    (f) => f.organizationId === organization.id && f.weightClass === weightClass.id && !f.retired && isRankEligible(f),
   );
   const scored = roster
     .map((f) => ({ fighterId: f.id, score: computeRankScore(f) }))

@@ -6,7 +6,10 @@ import { NATIONALITIES } from "@/data/names";
 import { generateNpcFighter } from "@/game/fighter/generate";
 import { rebuildAllRankings } from "@/game/ranking/rankings";
 
-const FIGHTERS_PER_WEIGHT_CLASS = 10;
+// Assez de combattants par categorie pour offrir un vrai bassin
+// d'adversaires coherents (gatekeepers, milieu de classement, contenders)
+// plutot qu'une poignee de noms ou tout le monde finit "classe" d'office.
+const FIGHTERS_PER_WEIGHT_CLASS = 26;
 
 /**
  * Cree un snapshot initial du monde (section 7/122) : le vrai roster n'est
