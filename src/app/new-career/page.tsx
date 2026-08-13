@@ -16,6 +16,11 @@ import type { Gender, StyleId, OriginId, LifestyleId, EntourageId } from "@/type
 const STEPS = ["nationalite", "identite", "categorie", "style", "origine", "mode_de_vie", "entourage", "resume"] as const;
 type Step = (typeof STEPS)[number];
 
+// Ces etapes n'ont qu'un choix a faire : cliquer une carte avance directement,
+// pas besoin d'un bouton "Suivant" separe.
+const AUTO_ADVANCE_STEPS: Step[] = ["nationalite", "categorie", "style", "origine", "mode_de_vie", "entourage"];
+const SELECTION_DELAY_MS = 180;
+
 export default function NewCareerPage() {
   const router = useRouter();
   const startCareer = useCareerStore((s) => s.startCareer);
@@ -47,6 +52,12 @@ export default function NewCareerPage() {
   }
   function back() {
     setStepIndex((i) => Math.max(0, i - 1));
+  }
+
+  /** Applique le choix (feedback visuel immediat via le state) puis avance automatiquement. */
+  function selectAndAdvance<T>(setter: (value: T) => void, value: T) {
+    setter(value);
+    setTimeout(next, SELECTION_DELAY_MS);
   }
 
   function canProceed(): boolean {
@@ -83,7 +94,7 @@ export default function NewCareerPage() {
             {NATIONALITIES.map((n) => (
               <ChoiceCard
                 key={n.code}
-                onClick={() => setNationalityCode(n.code)}
+                onClick={() => selectAndAdvance(setNationalityCode, n.code)}
                 className={nationalityCode === n.code ? "border-accent-gold" : ""}
               >
                 <span className="text-lg">{n.flag}</span> <span className="text-sm">{n.label}</span>
@@ -133,7 +144,7 @@ export default function NewCareerPage() {
             {weightClasses.map((wc) => (
               <ChoiceCard
                 key={wc.id}
-                onClick={() => setWeightClassId(wc.id)}
+                onClick={() => selectAndAdvance(setWeightClassId, wc.id)}
                 className={weightClassId === wc.id ? "border-accent-gold" : ""}
               >
                 <div className="text-sm font-semibold">{wc.label}</div>
@@ -148,7 +159,7 @@ export default function NewCareerPage() {
         <StepBlock title="Style de base" subtitle="Ton bagage martial de depart.">
           <div className="flex flex-col gap-2">
             {STYLES.map((s) => (
-              <ChoiceCard key={s.id} onClick={() => setStyleId(s.id)} className={styleId === s.id ? "border-accent-gold" : ""}>
+              <ChoiceCard key={s.id} onClick={() => selectAndAdvance(setStyleId, s.id)} className={styleId === s.id ? "border-accent-gold" : ""}>
                 <div className="text-sm font-semibold">
                   {s.emoji} {s.label}
                 </div>
@@ -163,7 +174,7 @@ export default function NewCareerPage() {
         <StepBlock title="Origine" subtitle="D'ou viens-tu, avant tout ça ?">
           <div className="flex flex-col gap-2">
             {ORIGINS.map((o) => (
-              <ChoiceCard key={o.id} onClick={() => setOriginId(o.id)} className={originId === o.id ? "border-accent-gold" : ""}>
+              <ChoiceCard key={o.id} onClick={() => selectAndAdvance(setOriginId, o.id)} className={originId === o.id ? "border-accent-gold" : ""}>
                 <div className="text-sm font-semibold">
                   {o.emoji} {o.label}
                 </div>
@@ -178,7 +189,7 @@ export default function NewCareerPage() {
         <StepBlock title="Mode de vie" subtitle="Comment vis-tu, en dehors de la salle ?">
           <div className="flex flex-col gap-2">
             {LIFESTYLES.map((l) => (
-              <ChoiceCard key={l.id} onClick={() => setLifestyleId(l.id)} className={lifestyleId === l.id ? "border-accent-gold" : ""}>
+              <ChoiceCard key={l.id} onClick={() => selectAndAdvance(setLifestyleId, l.id)} className={lifestyleId === l.id ? "border-accent-gold" : ""}>
                 <div className="text-sm font-semibold">
                   {l.emoji} {l.label}
                 </div>
@@ -193,7 +204,7 @@ export default function NewCareerPage() {
         <StepBlock title="Entourage" subtitle="Qui t'accompagne dans cette aventure ?">
           <div className="flex flex-col gap-2">
             {ENTOURAGES.map((e) => (
-              <ChoiceCard key={e.id} onClick={() => setEntourageId(e.id)} className={entourageId === e.id ? "border-accent-gold" : ""}>
+              <ChoiceCard key={e.id} onClick={() => selectAndAdvance(setEntourageId, e.id)} className={entourageId === e.id ? "border-accent-gold" : ""}>
                 <div className="text-sm font-semibold">
                   {e.emoji} {e.label}
                 </div>
@@ -229,7 +240,7 @@ export default function NewCareerPage() {
             Retour
           </Button>
         )}
-        {step !== "resume" && (
+        {step !== "resume" && !AUTO_ADVANCE_STEPS.includes(step) && (
           <Button onClick={next} disabled={!canProceed()}>
             Suivant
           </Button>

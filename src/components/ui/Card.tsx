@@ -15,7 +15,7 @@ export function ChoiceCard({
 }: HTMLAttributes<HTMLButtonElement> & Record<string, unknown>) {
   return (
     <button
-      className={`w-full rounded-2xl border border-border bg-surface-2 p-4 text-left transition-colors hover:border-accent-gold hover:bg-surface cursor-pointer ${className}`}
+      className={`w-full rounded-2xl border border-border bg-surface-2 p-4 text-left transition-all duration-150 hover:border-accent-gold hover:bg-surface active:scale-[0.97] active:border-accent-gold active:bg-surface cursor-pointer ${className}`}
       {...(props as HTMLAttributes<HTMLButtonElement>)}
     />
   );
