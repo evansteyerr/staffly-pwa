@@ -124,11 +124,36 @@ export function createCareer(input: NewCareerInput): CareerState {
   return addMoment(state, { label: "Debut du reve", detail: "Une nouvelle carriere commence.", kind: "debut" });
 }
 
+/** Age au-dela duquel la carriere s'arrete obligatoirement (section demandee : fin vers 38, jamais au-dela de 40). */
+const HARD_RETIREMENT_AGE = 40;
+
+/**
+ * Un seul choix peut faire avancer le temps de plusieurs mois d'un coup
+ * (EVENT_TIME_SCALE) : sans ce filet, un combattant a 39 ans et demi
+ * pourrait "sauter" a 41-42 ans en un clic, passant au travers du
+ * controle fait en debut de tick. On recadre donc la date exacte sur le
+ * jour du 40e anniversaire avant de finaliser, pour que la limite soit
+ * toujours respectee a l'annee pres.
+ */
+function enforceHardRetirementAge(state: CareerState, rng: Rng): CareerState {
+  if (state.retired) return state;
+  const age = ageFromDob(state.fighter.dateOfBirth, state.worldDate);
+  if (age < HARD_RETIREMENT_AGE) return state;
+
+  const dob = new Date(state.fighter.dateOfBirth);
+  const cappedDate = new Date(dob.getFullYear() + HARD_RETIREMENT_AGE, dob.getMonth(), dob.getDate());
+  const cappedDateStr = cappedDate.toISOString().slice(0, 10);
+
+  return finalizeRetirement({ ...state, worldDate: cappedDateStr }, rng);
+}
+
 function retirementCheckProbability(age: number, wear: number): number {
   if (age < 31) return 0;
-  const ageFactor = (age - 31) * 0.05;
-  const wearFactor = wear > 55 ? (wear - 55) * 0.015 : 0;
-  return Math.min(0.6, ageFactor + wearFactor);
+  // Rampe plus marquee : quasi certain d'avoir propose la retraite avant
+  // 38 ans, le cap dur a 40 ans n'etant qu'un filet de securite.
+  const ageFactor = (age - 31) * 0.11;
+  const wearFactor = wear > 50 ? (wear - 50) * 0.018 : 0;
+  return Math.min(0.85, ageFactor + wearFactor);
 }
 
 function buildRetirementEvent(): EventTemplate {
@@ -180,6 +205,9 @@ function totalFights(f: Fighter): number {
  * title shot beaucoup trop tot dans la carriere.
  */
 const MIN_FIGHTS_FOR_TITLE_SHOT = 8;
+
+/** Minimum de jours entre deux combats (avant camp) : au plus ~3 combats par an. */
+const MIN_DAYS_BETWEEN_FIGHTS = 110;
 
 function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
   const candidates = Object.values(state.worldState.fighters).filter(
@@ -267,7 +295,7 @@ export function advanceTurn(state: CareerState): CareerState {
   const rng = getRng(state);
   const age = ageFromDob(state.fighter.dateOfBirth, state.worldDate);
 
-  if (state.fighter.careerWear >= 85) {
+  if (state.fighter.careerWear >= 92 || age >= HARD_RETIREMENT_AGE) {
     return pushRng(finalizeRetirement(state, rng), rng);
   }
 
@@ -302,8 +330,17 @@ export function advanceTurn(state: CareerState): CareerState {
 
   if (state.contract) {
     // Laisse la place a plusieurs evenements narratifs entre deux combats
-    // (section 2 : le jeu ne doit pas etre qu'une succession de fights).
-    const fightChance = Math.min(0.45, 0.06 + state.ticksSinceLastFight * 0.07);
+    // (section 2 : le jeu ne doit pas etre qu'une succession de fights),
+    // et respecte un rythme de carriere realiste : un combattant pro ne
+    // combat pas plus de 2-3 fois par an. Le camp ajoute encore 21-42
+    // jours au-dela de ce minimum, donc l'ecart reel entre deux combats
+    // depasse toujours 4 mois.
+    const lastFightDate = state.fightHistory.at(-1)?.fight.date;
+    const daysSinceLastFight = lastFightDate
+      ? Math.round((new Date(state.worldDate).getTime() - new Date(lastFightDate).getTime()) / 86400000)
+      : Infinity;
+
+    const fightChance = daysSinceLastFight < MIN_DAYS_BETWEEN_FIGHTS ? 0 : Math.min(0.7, 0.2 + state.ticksSinceLastFight * 0.15);
     if (rng.chance(fightChance)) {
       const opponent = pickOpponent(state, rng);
       if (opponent) {
@@ -361,6 +398,8 @@ export function resolveEventChoice(state: CareerState, choiceId: string): Career
 
   if (next.flags.includes("career_retire_now")) {
     next = finalizeRetirement(next, rng);
+  } else {
+    next = enforceHardRetirementAge(next, rng);
   }
 
   return pushRng(next, rng);
@@ -427,6 +466,7 @@ export function declinePendingFight(state: CareerState): CareerState {
     pendingFight: null,
   };
   next = syncPlayerIntoWorld(next);
+  next = enforceHardRetirementAge(next, rng);
   return pushRng(next, rng);
 }
 
@@ -500,7 +540,7 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
     momentum: Math.max(-100, Math.min(100, state.fighter.momentum + (won ? 15 : lost ? -18 : -2))),
     confidence: Math.max(0, Math.min(100, state.fighter.confidence + (won ? 8 : -10))),
     morale: Math.max(0, Math.min(100, state.fighter.morale + (won ? 6 : -12))),
-    careerWear: Math.min(100, state.fighter.careerWear + rng.float(7, 15) + (lost && isFinish ? 4 : 0)),
+    careerWear: Math.min(100, state.fighter.careerWear + rng.float(3, 7) + (lost && isFinish ? 2 : 0)),
     form: Math.max(0, state.fighter.form - rng.float(5, 12)),
   };
 
@@ -585,6 +625,7 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
     }
   }
 
+  next = enforceHardRetirementAge(next, rng);
   return pushRng(next, rng);
 }
 
