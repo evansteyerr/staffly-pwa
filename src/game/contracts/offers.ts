@@ -20,7 +20,11 @@ export function generateContractOffers(state: CareerState, rng: Rng): ContractOf
   const offers: ContractOffer[] = [];
   for (const org of ORGANIZATIONS) {
     const eligibility = strength - org.recruitmentDifficulty;
-    if (eligibility < -25 && org.tier !== "regional") continue;
+    // Un debutant sans palmares doit d'abord faire ses preuves en regional
+    // (section 39/99) : les paliers mid/elite se meritent avec des victoires,
+    // de la popularite et de la reputation, pas juste un profil correct.
+    const minEligibility = org.tier === "elite" ? 20 : org.tier === "mid" ? 0 : -Infinity;
+    if (eligibility < minEligibility) continue;
     if (state.contract?.organizationId === org.id) continue;
 
     const tierMultiplier = org.tier === "elite" ? 3.2 : org.tier === "mid" ? 1.6 : 1;

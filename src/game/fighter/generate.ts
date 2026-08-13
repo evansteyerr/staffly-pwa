@@ -65,7 +65,11 @@ export function generatePlayerFighter(input: PlayerCreationInput, rng: Rng): Fig
   const style = getStyle(input.styleId);
   const origin = getOrigin(input.originId);
 
-  let attributes = baseAttributes(rng, 42, 6);
+  // Centre plus eleve que la moyenne brute du monde genere : un combattant
+  // qui debute sa carriere pro est deja un prospect entraine, pas un
+  // amateur pris au hasard — sinon le premier palier regional est injouable
+  // face au vivier NPC (qui contient une bonne part de profils 55-72).
+  let attributes = baseAttributes(rng, 56, 6);
   attributes = applyModifiers(attributes, style.bonuses);
   attributes = applyModifiers(attributes, style.maluses);
   attributes = applyModifiers(attributes, origin.bonuses);
