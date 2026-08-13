@@ -18,6 +18,11 @@ const METHOD_LABELS: Record<FightMethod, string> = {
   no_contest: "No contest",
 };
 
+const BONUS_LABELS: Record<string, string> = {
+  fight_of_the_night: "🥊 Fight of the Night",
+  performance_of_the_night: "⚡ Performance of the Night",
+};
+
 export function FightResult({ career }: { career: CareerState }) {
   const clearFightResult = useCareerStore((s) => s.clearFightResult);
   const result = career.lastFightResult!;
@@ -37,6 +42,20 @@ export function FightResult({ career }: { career: CareerState }) {
             {result.finishingMove ? ` — ${result.finishingMove}` : ""} · Round {result.round} · {result.time}
           </div>
           {result.isUpset && <div className="mt-2 text-xs font-semibold text-accent-gold">⚡ ENORME SURPRISE</div>}
+          {result.bonusAwards.length > 0 && (
+            <div className="mt-3 flex flex-col items-center gap-1">
+              {result.bonusAwards.map((award) => (
+                <div key={award} className="rounded-full border border-accent-gold bg-accent-gold/10 px-3 py-1 text-xs font-semibold text-accent-gold">
+                  {BONUS_LABELS[award] ?? award}
+                </div>
+              ))}
+              {result.bonusPayout ? (
+                <div className="text-sm font-bold text-accent-gold">
+                  +{result.bonusPayout.toLocaleString("fr-FR")} € de prime
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
         {opponent && (
           <div className="mt-3 text-center text-sm text-muted">

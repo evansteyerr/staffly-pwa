@@ -209,6 +209,24 @@ const MIN_FIGHTS_FOR_TITLE_SHOT = 8;
 /** Minimum de jours entre deux combats (avant camp) : au plus ~3 combats par an. */
 const MIN_DAYS_BETWEEN_FIGHTS = 85;
 
+/**
+ * Prime "Fight/Performance of the Night" (section demandee) : le budget
+ * depend du palier de l'organisation — pas le meme montant chez ARES
+ * (regional) et a l'UFC (elite).
+ */
+const BONUS_PAYOUT_RANGE_BY_TIER: Record<string, [number, number]> = {
+  regional: [7000, 13000],
+  mid: [20000, 35000],
+  elite: [45000, 55000],
+};
+
+function computeBonusPayout(organizationId: string, bonusAwards: string[], rng: Rng): number {
+  if (bonusAwards.length === 0) return 0;
+  const org = getOrganization(organizationId);
+  const [min, max] = BONUS_PAYOUT_RANGE_BY_TIER[org.tier];
+  return Math.round(rng.float(min, max));
+}
+
 function pickOpponent(state: CareerState, rng: Rng): Fighter | null {
   const candidates = Object.values(state.worldState.fighters).filter(
     (f) =>
@@ -344,7 +362,7 @@ export function advanceTurn(state: CareerState): CareerState {
     // demandee : un veteran de 39 ans doit avoir un vrai palmares fourni,
     // pas 8-2). Peu de tours narratifs suffisent avant que l'opportunite
     // se concretise.
-    const fightChance = daysSinceLastFight < MIN_DAYS_BETWEEN_FIGHTS ? 0 : Math.min(1, 0.75 + state.ticksSinceLastFight * 0.4);
+    const fightChance = daysSinceLastFight < MIN_DAYS_BETWEEN_FIGHTS ? 0 : Math.min(1, 0.92 + state.ticksSinceLastFight * 0.5);
     if (rng.chance(fightChance)) {
       const opponent = pickOpponent(state, rng);
       if (opponent) {
@@ -525,6 +543,9 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
     rng,
   );
 
+  const bonusPayout = computeBonusPayout(pendingFight.organizationId, result.bonusAwards, rng);
+  if (bonusPayout > 0) result.bonusPayout = bonusPayout;
+
   const won = result.winnerId === state.fighter.id;
   const lost = result.winnerId === opponent.id;
   const isFinish = result.method === "ko" || result.method === "tko" || result.method === "submission";
@@ -559,7 +580,7 @@ export function resolvePendingFight(state: CareerState, plan: FightPlan): Career
     momentum: Math.max(-100, Math.min(100, opponent.momentum + (lost ? 15 : won ? -18 : -2))),
   };
 
-  const purse = state.contract ? state.contract.showMoney + (won ? state.contract.winBonus : 0) : 0;
+  const purse = (state.contract ? state.contract.showMoney + (won ? state.contract.winBonus : 0) : 0) + bonusPayout;
 
   let next: CareerState = {
     ...state,
